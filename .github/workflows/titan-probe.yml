@@ -1,0 +1,23 @@
+name: Titan007 connectivity probe
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '20 7 * * *'
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe source pages and collect unverified match links
+        run: python scripts/titan_probe.py
+      - name: Upload diagnostic JSON
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: titan-source-diagnostic
+          path: output/titan_probe.json
+          if-no-files-found: warn
+          retention-days: 7
