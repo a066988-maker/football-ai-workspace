@@ -1,0 +1,23 @@
+name: Gemini football analysis
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate and analyze verified fixtures
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-2.5-flash
+        run: python scripts/analyze.py
+      - name: Upload reviewed output
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: football-analysis
+          path: output/analysis.json
+          retention-days: 7
