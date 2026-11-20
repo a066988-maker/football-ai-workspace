@@ -5,6 +5,7 @@ from pathlib import Path
 
 import collect
 import analyze
+import notify
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
@@ -23,6 +24,7 @@ def main():
             report["status"] = "ai_error"
             report["message"] = type(exc).__name__ + ": " + str(exc)[:200]
             (OUT / "analysis.json").unlink(missing_ok=True)
+    report["telegram"] = notify.notify(report["status"])
     report["finished_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
     (OUT / "status.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
