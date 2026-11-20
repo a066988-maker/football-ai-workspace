@@ -13,9 +13,9 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-INDEX = "https://www.titan007.com/index.htm"
+INDEX = "https://bf.titan007.com/football/"
 MAX_DETAIL_PAGES = 3
-ALLOWED_HOSTS = {"www.titan007.com", "titan007.com", "vip.titan007.com", "zq.titan007.com", "info.titan007.com", "1x2.titan007.com", "ba2.titan007.com"}
+ALLOWED_HOSTS = {"bf.titan007.com", "www.titan007.com", "titan007.com", "vip.titan007.com", "zq.titan007.com", "info.titan007.com", "1x2.titan007.com"}
 UA = "FootballWorkspaceResearch/0.2 (low-frequency diagnostic)"
 
 class Links(HTMLParser):
@@ -114,8 +114,24 @@ def main():
             "source":INDEX,"status":"unverified","detail_pages":[],"candidate_count":0,
             "note":"Page titles, text excerpts and keyword flags are diagnostics only; no odds or fixture has been validated."}
     try:
-        response=request(INDEX)
-        report["index_status"]=response["status"]
+        local_today=(dt.datetime.now(dt.timezone.utc)+dt.timedelta(hours=8)).date()
+        football_pages=[
+            "https://bf.titan007.com/football/Next_"+day.strftime("%Y%m%d")+".htm"
+            for day in (local_today,local_today+dt.timedelta(days=1))
+        ]
+        report["football_pages"]=football_pages
+        fetched=[]
+        for url in football_pages:
+            try:
+                response=request(url)
+                fetched.append(response["html"])
+                report.setdefault("page_results",[]).append({"url":url,"http_status":response["status"],"html_bytes":response["bytes"]})
+            except (OSError,ValueError) as e:
+                report.setdefault("page_results",[]).append({"url":url,"error":type(e).__name__+": "+str(e)[:180]})
+        if not fetched:
+            raise ValueError("Football-specific schedule pages unavailable")
+        response={"html":"\\n".join(fetched)}
+        report["index_status"]=200
         candidates=candidate_urls(response["html"])
         parser=Links()
         parser.feed(response["html"])
@@ -127,6 +143,7 @@ def main():
         report["matching_raw_count"]=sum(bool(re.search(r"(?:analysis/|oddslist/)\d{5,}",link["href"],re.I)) for link in parser.links)
         report["raw_html_match_count"]=len(re.findall(r"(?:analysis/|oddslist/)\d{5,}",response["html"],re.I))
         report["candidate_count"]=len(candidates)
+        report["scope"]="football-specific schedule pages only; candidates not verified"
         report["candidate_preview"]=[{"match_id":c["match_id"],"url":c["url"],"source_urls":c["source_urls"][:5]} for c in candidates[:10]]
         for candidate in candidates[:MAX_DETAIL_PAGES]:
             report["detail_pages"].append(summarize(candidate))
@@ -138,6 +155,7 @@ def main():
     output.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
     print("Status:",report["status"])
     print("Candidate IDs:",report["candidate_count"])
+    print("Football pages:",report.get("page_results",[]))
     for item in report["detail_pages"]:
         print("ID:",item["match_id"],"HTTP:",item.get("http_status"),"Title:",item.get("page_title","")[:90],"Error:",item.get("error",""))
     if report["status"]!="sampled":
