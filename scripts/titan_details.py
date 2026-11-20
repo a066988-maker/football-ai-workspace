@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 INDEX = "https://www.titan007.com/index.htm"
 MAX_DETAIL_PAGES = 3
-ALLOWED_HOSTS = {"www.titan007.com", "titan007.com", "vip.titan007.com", "zq.titan007.com"}
+ALLOWED_HOSTS = {"www.titan007.com", "titan007.com", "vip.titan007.com", "zq.titan007.com", "info.titan007.com", "1x2.titan007.com", "ba2.titan007.com"}
 UA = "FootballWorkspaceResearch/0.2 (low-frequency diagnostic)"
 
 class Links(HTMLParser):
@@ -68,11 +68,25 @@ def candidate_urls(index_html):
         parsed=urllib.parse.urlparse(url)
         if parsed.scheme not in ("https","http") or parsed.hostname not in ALLOWED_HOSTS:
             continue
-        m=re.search(r"(?:analysis/|oddslist/)(\d{5,})",parsed.path,re.I)
-        if not m:
+        path=parsed.path
+        query=urllib.parse.parse_qs(parsed.query)
+        match=re.search(r"/(?:analysis|oddslist)/(\\d{5,})(?:cn)?\\.htm",path,re.I)
+        if not match:
+            match=re.search(r"/linkmatch/\\d+/(\\d{5,})\\.html",path,re.I)
+        match_id=match.group(1) if match else None
+        if not match_id and re.search(r"/(?:AsianOdds_n|OverDown_n)\\.aspx",path,re.I):
+            value=query.get("id",[""])[0]
+            if re.fullmatch(r"\\d{5,}",value):
+                match_id=value
+        if not match_id:
             continue
-        found.setdefault(m.group(1),{"match_id":m.group(1),"url":url,"link_label":link["text"]})
-    return list(found.values())
+        item=found.setdefault(match_id,{"match_id":match_id,"url":None,"link_label":"","source_urls":[]})
+        item["source_urls"].append(url)
+        if not item["link_label"] and link["text"]:
+            item["link_label"]=link["text"]
+        if re.search(r"/analysis/\\d{5,}cn\\.htm",path,re.I):
+            item["url"]=url
+    return [{**item,"url":item["url"] or item["source_urls"][0]} for item in found.values()]
 
 def summarize(candidate):
     item={**candidate,"verified":False}
@@ -113,6 +127,7 @@ def main():
         report["matching_raw_count"]=sum(bool(re.search(r"(?:analysis/|oddslist/)\\d{5,}",link["href"],re.I)) for link in parser.links)
         report["raw_html_match_count"]=len(re.findall(r"(?:analysis/|oddslist/)\\d{5,}",response["html"],re.I))
         report["candidate_count"]=len(candidates)
+        report["candidate_preview"]=[{"match_id":c["match_id"],"url":c["url"],"source_urls":c["source_urls"][:5]} for c in candidates[:10]]
         for candidate in candidates[:MAX_DETAIL_PAGES]:
             report["detail_pages"].append(summarize(candidate))
         report["status"]="sampled" if report["detail_pages"] else "no_detail_candidates"
