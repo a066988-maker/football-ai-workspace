@@ -70,13 +70,13 @@ def candidate_urls(index_html):
             continue
         path=parsed.path
         query=urllib.parse.parse_qs(parsed.query)
-        match=re.search(r"/(?:analysis|oddslist)/(\\d{5,})(?:cn)?\\.htm",path,re.I)
+        match=re.search(r"/(?:analysis|oddslist)/(\d{5,})(?:cn)?\.htm",path,re.I)
         if not match:
-            match=re.search(r"/linkmatch/\\d+/(\\d{5,})\\.html",path,re.I)
+            match=re.search(r"/linkmatch/\d+/(\d{5,})\.html",path,re.I)
         match_id=match.group(1) if match else None
-        if not match_id and re.search(r"/(?:AsianOdds_n|OverDown_n)\\.aspx",path,re.I):
+        if not match_id and re.search(r"/(?:AsianOdds_n|OverDown_n)\.aspx",path,re.I):
             value=query.get("id",[""])[0]
-            if re.fullmatch(r"\\d{5,}",value):
+            if re.fullmatch(r"\d{5,}",value):
                 match_id=value
         if not match_id:
             continue
@@ -84,7 +84,7 @@ def candidate_urls(index_html):
         item["source_urls"].append(url)
         if not item["link_label"] and link["text"]:
             item["link_label"]=link["text"]
-        if re.search(r"/analysis/\\d{5,}cn\\.htm",path,re.I):
+        if re.search(r"/analysis/\d{5,}cn\.htm",path,re.I):
             item["url"]=url
     return [{**item,"url":item["url"] or item["source_urls"][0]} for item in found.values()]
 
@@ -123,9 +123,9 @@ def main():
         report["link_samples"]=[{"href":link["href"][:240],"label":link["text"][:100]} for link in parser.links[:80]]
         report["numeric_link_samples"]=[{"href":link["href"][:240],"label":link["text"][:100]} for link in parser.links if re.search(r"\d{5,}",link["href"])][:60]
         report["football_link_samples"]=[{"href":link["href"][:240],"label":link["text"][:100]} for link in parser.links if re.search(r"analysis|odds|match|live|detail|football|score|亚盘|欧赔",link["href"]+" "+link["text"],re.I)][:60]
-        report["matching_raw_links"]=[link for link in parser.links if re.search(r"(?:analysis/|oddslist/)\\d{5,}",link["href"],re.I)][:12]
-        report["matching_raw_count"]=sum(bool(re.search(r"(?:analysis/|oddslist/)\\d{5,}",link["href"],re.I)) for link in parser.links)
-        report["raw_html_match_count"]=len(re.findall(r"(?:analysis/|oddslist/)\\d{5,}",response["html"],re.I))
+        report["matching_raw_links"]=[link for link in parser.links if re.search(r"(?:analysis/|oddslist/)\d{5,}",link["href"],re.I)][:12]
+        report["matching_raw_count"]=sum(bool(re.search(r"(?:analysis/|oddslist/)\d{5,}",link["href"],re.I)) for link in parser.links)
+        report["raw_html_match_count"]=len(re.findall(r"(?:analysis/|oddslist/)\d{5,}",response["html"],re.I))
         report["candidate_count"]=len(candidates)
         report["candidate_preview"]=[{"match_id":c["match_id"],"url":c["url"],"source_urls":c["source_urls"][:5]} for c in candidates[:10]]
         for candidate in candidates[:MAX_DETAIL_PAGES]:
