@@ -1,0 +1,10 @@
+{
+  "updated_at": "2026-11-21T07:56:42+08:00",
+  "status": "source_error",
+  "window_start": "2026-11-21T16:00+08:00",
+  "window_end": "2026-11-22T08:00+08:00",
+  "source": "https://livestatic.titan007.com/vbsxml/",
+  "source_note": "Public Titan007 football feed; no invented matches/odds",
+  "message": "RemoteDisconnected: Remote end closed connection without response",
+  "finished_at": "2026-11-20T23:56:43.854558+00:00"
+}
