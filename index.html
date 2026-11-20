@@ -1,7 +1,189 @@
-<!doctype html><html lang="zh-Hant"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>足球 AI 工作台</title><style>body{background:#101827;color:#f1f5f9;font:16px system-ui;margin:0;padding:20px}main{max-width:900px;margin:auto}textarea{box-sizing:border-box;width:100%;height:250px;background:#1e293b;color:white;padding:12px;border:1px solid #64748b;border-radius:10px}button{background:#4adeb0;border:0;padding:12px;margin:6px;border-radius:8px;font-weight:bold}canvas{max-width:100%;width:350px}section{display:flex;gap:18px;flex-wrap:wrap}section>div{flex:1;min-width:280px}pre{white-space:pre-wrap}</style><main><h1>足球 AI 工作台</h1><p>免費測試版｜人工匯入已查證的賽事資料，檢查格式、編輯文案及製作圖片。尚未連接即時球探網或 AI。</p><button id="sample">載入資料格式</button><input type="file" id="file" accept=".json"><textarea id="data" placeholder="在此貼入賽事 JSON"></textarea><div><button id="check">檢查資料</button><button id="make">產生文案與圖片</button><button id="save">下載資料</button></div><pre id="msg"></pre><section><div><canvas id="poster" width="1080" height="1920"></canvas><button id="png">下載 PNG</button></div><div><h2>小紅書文案</h2><textarea id="copy"></textarea><button id="copytext">複製文案</button></div></section></main><script>
-const E=id=>document.getElementById(id),c=E('poster'),g=c.getContext('2d');E('file').onchange=async e=>E('data').value=await e.target.files[0].text();E('sample').onclick=()=>E('data').value=JSON.stringify({source:"",verified_at:"",matches:[{league:"",home:"",away:"",kickoff:"2026-11-15T20:00",source_url:"",odds_checked_at:"",asian_open:"",asian_live:"",euro_live:"",ou_open:"",ou_live:"",analysis:"",trend:"大 2.5",scores:["1-0","2-1","1-1"]}]},null,2);
-function read(){let d=JSON.parse(E('data').value),errors=[];if(!d.source||!d.verified_at)errors.push("缺少資料來源或驗證時間");if(!Array.isArray(d.matches)||d.matches.length<3||d.matches.length>5)errors.push("賽事必須為 3～5 場");(d.matches||[]).forEach((m,i)=>{for(let k of ['league','home','away','kickoff','source_url','odds_checked_at','asian_open','asian_live','euro_live','ou_open','ou_live','analysis','trend'])if(!m[k])errors.push("第"+(i+1)+"場缺少 "+k);if(!/^https:\/\//.test(m.source_url||""))errors.push("第"+(i+1)+"場來源網址不合格式");if(!Array.isArray(m.scores)||m.scores.length!==3||m.scores.some(s=>!/^\d{1,2}-\d{1,2}$/.test(s)))errors.push("第"+(i+1)+"場比分不合格式");else if(['主勝','客勝','平局'].includes(m.trend))errors.push("第"+(i+1)+"場請改用亞盤或大小球方向")});E('msg').textContent=errors.length?errors.join('\n'):'格式檢查通過（不代表外部資料已查證）';return errors.length?null:d}
-E('check').onclick=()=>{try{read()}catch(e){E('msg').textContent=e.message}};function line(t,x,y,size,color='#fff'){g.fillStyle=color;g.font=size+'px sans-serif';g.fillText(t,x,y)}
-E('make').onclick=()=>{try{let d=read();if(!d)return;g.fillStyle='#0d1829';g.fillRect(0,0,1080,1920);line('足球赛事前瞻',65,115,70);d.matches.forEach((m,i)=>{let step=1450/d.matches.length,y=220+i*step;g.fillStyle='#22334a';g.fillRect(45,y,990,step-15);line((m.league+'  '+m.kickoff.slice(5,16)).slice(0,32),75,y+60,30,'#5eeac2');line((m.home+' VS '+m.away).slice(0,24),75,y+120,38);line('比分 '+m.scores.join(' / '),75,y+175,32);line('趋势 '+m.trend,75,y+225,34,'#ffda8b')});line('仅供赛事交流，请理性看待',75,1830,30,'#b4c6d9');E('copy').value='今晚足球前瞻｜'+d.matches.length+'场精选\n\n'+d.matches.map(m=>'【'+m.league+'】'+m.home+' vs '+m.away+'\n比分参考：'+m.scores.join(' / ')+'\n趋势参考：'+m.trend+'\n'+m.analysis).join('\n\n')+'\n\n仅供赛事交流，不构成投注建议。\n#足球 #赛事前瞻 #足球分析'}catch(e){E('msg').textContent=e.message}};
-function dl(name,b){let u=URL.createObjectURL(b),a=document.createElement('a');a.href=u;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)}E('png').onclick=()=>c.toBlob(b=>dl('football.png',b));E('save').onclick=()=>dl('matches.json',new Blob([E('data').value],{type:'application/json'}));E('copytext').onclick=()=>navigator.clipboard.writeText(E('copy').value);
-</script></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>足球 AI 工作台｜每日賽事與小紅書素材</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;background:#101722;color:#e8eef5;font:15px/1.5 system-ui,-apple-system,"Noto Sans TC",sans-serif}
+main{max-width:1060px;margin:auto;padding:18px}h1{font-size:25px;margin:8px 0}h2{font-size:18px;margin:8px 0}.sub{color:#a9bdcb;margin:0 0 16px}
+.panel{background:#192638;border:1px solid #314456;border-radius:14px;padding:16px;margin:14px 0}
+button,.file-button{background:#6fe6ba;color:#13232d;border:0;border-radius:9px;padding:10px 14px;font-weight:700;margin:3px;cursor:pointer}
+button.secondary{background:#31475d;color:#f2f7f9}button:focus-visible,textarea:focus-visible,input:focus-visible{outline:2px solid #6fe6ba}
+textarea,input{background:#102031;color:#ecf4f8;border:1px solid #455f75;border-radius:9px;padding:10px;font:inherit;width:100%;margin:4px 0}
+textarea{resize:vertical;min-height:110px}#data{height:175px;font:12px/1.45 ui-monospace,monospace}
+#copy{height:470px}canvas{width:100%;max-width:440px;background:#0b1424;border-radius:10px}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:18px}.small{font-size:13px;color:#aac1d1}
+.match{border-top:1px solid #34495d;padding:12px 0}.match:first-child{border-top:0}
+.match strong{display:block;margin-bottom:6px}.editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.editor-grid label{font-size:13px;color:#b8cddd}#notice{white-space:pre-wrap;color:#f2ce8e}
+#fixtures-list{max-height:260px;overflow:auto;white-space:pre-wrap;font-size:13px}
+details summary{cursor:pointer;font-weight:700}input[type=file]{max-width:240px;padding:5px}
+@media(max-width:720px){main{padding:12px}.columns{grid-template-columns:1fr}.panel{padding:12px}#copy{height:380px}.editor-grid{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+<h1>足球 AI 工作台</h1>
+<p class="sub">16:00 台灣時間每日自動更新｜核實盤口後才允許 AI 產文案｜手機可編輯、複製及下載圖片</p>
+<div class="panel">
+  <h2>每日執行狀態</h2>
+  <div id="daily-state" class="small">正在檢查已發布的資料……</div>
+  <button id="refresh">讀取最新資料</button>
+  <details><summary>查看當日賽程與聯賽場數</summary><div id="fixtures-list">尚無賽程資料</div></details>
+</div>
+<div class="panel">
+  <h2>可編輯的分析卡片</h2>
+  <p class="small">只會自動載入經資料檢查與 AI 輸出檢查的賽事。調整以下文字、方向與比分後可重新產圖。</p>
+  <div id="editors">當每日分析成功產出後，這裡會出現各場編輯欄位。</div>
+</div>
+<div class="panel">
+  <h2>資料與輸出</h2>
+  <div>
+    <button id="make">重新產生圖與文案</button>
+    <button id="save" class="secondary">下載 JSON</button>
+    <button id="sample" class="secondary">示範空白格式</button>
+    <input type="file" id="file" accept=".json,application/json" aria-label="匯入賽事資料">
+  </div>
+  <details><summary>進階：編輯原始 JSON</summary><textarea id="data" spellcheck="false" placeholder="已核實賽事的 JSON"></textarea><button id="check" class="secondary">檢查資料格式</button></details>
+  <div id="notice" role="status"></div>
+</div>
+<div class="columns">
+  <div class="panel"><h2>小紅書直式圖片</h2><canvas id="poster" width="1080" height="1920"></canvas><button id="png">下載 PNG</button></div>
+  <div class="panel"><h2>小紅書簡體文案</h2><textarea id="copy" aria-label="可編輯簡體中文文案"></textarea><button id="copytext">複製文案</button><p class="small">圖中不含標籤或人物，Tag 僅放在文案末尾。所有分析僅供賽事交流，不保證結果。</p></div>
+</div>
+</main>
+<script>
+'use strict';
+const E=id=>document.getElementById(id);
+const canvas=E('poster'),ctx=canvas.getContext('2d');
+const STORE='football_ai_workspace_draft_v2';
+let currentDay='';
+function note(s){E('notice').textContent=s}
+function loadJson(){return JSON.parse(E('data').value)}
+function validate(d){
+  const errors=[];
+  if(!d.source||!d.verified_at)errors.push('缺少來源或驗證時間');
+  if(!Array.isArray(d.matches)||d.matches.length<3||d.matches.length>5)errors.push('必須有 3～5 場賽事');
+  (d.matches||[]).forEach((m,i)=>{
+    const prefix='第'+(i+1)+'場：';
+    ['league','home','away','kickoff','source_url','odds_checked_at','asian_open','asian_live','euro_live','ou_open','ou_live','analysis','trend'].forEach(k=>{if(m[k]===undefined||m[k]===null||m[k]==='')errors.push(prefix+'缺少 '+k)});
+    if(!/^https:\/\/[^ \n]+/.test(m.source_url||''))errors.push(prefix+'來源網址錯誤');
+    if(!Array.isArray(m.scores)||m.scores.length!==3||m.scores.some(s=>typeof s!=='string'||!/^\d{1,2}-\d{1,2}$/.test(s)))errors.push(prefix+'比分必須為三組');
+    const pick=String(m.trend||'').replace(/\s/g,'');
+    const match=/^(大|小)(\d+(?:\.\d+)?)$/.exec(pick);
+    if(!match)errors.push(prefix+'趨勢必須為已驗證大小球方向');
+    else if(Array.isArray(m.ou_live)&&Math.abs(Number(match[2])-Number(m.ou_live[1]))>1e-6)errors.push(prefix+'推薦球數與盤口不一致');
+    else if(Array.isArray(m.scores)&&m.scores.length&&/^\d+-\d+$/.test(m.scores[0])){
+      const n=m.scores[0].split('-').map(Number).reduce((a,b)=>a+b,0),line=Number(match[2]);
+      if((match[1]==='大'&&n<=line)||(match[1]==='小'&&n>=line))errors.push(prefix+'首選比分與大小方向不一致');
+    }
+  });
+  return errors;
+}
+function font(size){ctx.font='700 '+size+'px "Noto Sans SC","Microsoft YaHei",sans-serif'}
+function drawFit(text,x,y,max,size,color){
+  font(size);while(ctx.measureText(text).width>max&&size>21){size-=2;font(size)}
+  ctx.fillStyle=color;ctx.fillText(text,x,y);
+}
+function drawPoster(d){
+  const n=d.matches.length;
+  ctx.fillStyle='#0c1525';ctx.fillRect(0,0,1080,1920);
+  ctx.fillStyle='#67e8b4';ctx.fillRect(52,54,6,120);
+  drawFit(d.matches[0].kickoff.slice(0,10).replace(/-/g,'/'),82,103,870,40,'#72e6c1');
+  const title=d.matches[0].home+'压阵，'+d.matches[0].away+'来袭';
+  drawFit(title,70,171,940,56,'#f5fafc');
+  const top=225,step=1450/n;
+  d.matches.forEach((m,i)=>{
+    const y=top+i*step;
+    ctx.fillStyle=i%2?'#1a2c43':'#20344d';
+    ctx.beginPath();ctx.roundRect(42,y,996,step-18,15);ctx.fill();
+    drawFit(m.league+'  '+m.kickoff.slice(5,16).replace('T',' '),76,y+58,920,31,'#65e4b6');
+    drawFit(m.home+' VS '+m.away,76,y+122,918,47,'#f3f7fa');
+    drawFit('比分 '+m.scores.join(' / '),76,y+188,910,33,'#dce9f0');
+    drawFit('趋势 '+m.trend,76,y+246,910,35,'#ffda88');
+  });
+  drawFit('足球赛事前瞻 · 理性交流',70,1758,940,38,'#c2d4e0');
+  drawFit('仅供赛事讨论，不构成投注建议',70,1831,940,31,'#91abc0');
+}
+function makeCopy(d){
+  const h=d.matches[0].home+'迎战'+d.matches[0].away+'，今晚的盘口值得细看';
+  return h+'\n\n'+d.matches.map((m,i)=>{
+    return '【'+(i+1)+'｜'+m.league+'】'+m.home+' vs '+m.away+'\n开球：'+m.kickoff.slice(5,16).replace('T',' ')+'\n'+m.analysis+'\n趋势：'+m.trend+'\n比分：'+m.scores.join(' / ');
+  }).join('\n\n')+'\n\n仅供赛事交流，不构成投注建议，请理性判断。\n#足球 #足球分析 #赛事前瞻';
+}
+function make(){
+  try{
+    const d=loadJson(),errors=validate(d);
+    if(errors.length){note(errors.join('\n'));return}
+    drawPoster(d);E('copy').value=makeCopy(d);note('格式檢查通過；可編輯文案、下載 PNG。資料真實性以每日來源狀態為準。');
+    localStorage.setItem(STORE,JSON.stringify({date:currentDay,source:E('data').value,copy:E('copy').value}));
+  }catch(ex){note('無法產生：'+ex.message)}
+}
+function renderEditors(){
+  const root=E('editors');root.replaceChildren();
+  let data;try{data=loadJson()}catch{return}
+  if(!Array.isArray(data.matches)||!data.matches.length){root.textContent='無可編輯的賽事';return}
+  data.matches.forEach((m,i)=>{
+    const item=document.createElement('div');item.className='match';
+    const label=document.createElement('strong');label.textContent=(i+1)+'. '+m.league+'｜'+m.home+' vs '+m.away;item.appendChild(label);
+    const t=document.createElement('textarea');t.rows=3;t.value=m.analysis||'';t.setAttribute('aria-label','賽事分析 '+(i+1));item.appendChild(t);
+    const grid=document.createElement('div');grid.className='editor-grid';
+    function field(title,value,onEdit){
+      const wrap=document.createElement('label');wrap.textContent=title;
+      const inp=document.createElement('input');inp.value=value;inp.onchange=()=>onEdit(inp.value.trim());
+      wrap.appendChild(inp);grid.appendChild(wrap);
+    }
+    function persist(){E('data').value=JSON.stringify(data,null,2);make()}
+    t.onchange=()=>{m.analysis=t.value;persist()};
+    field('大小球方向',m.trend||'',v=>{m.trend=v;persist()});
+    [0,1,2].forEach(j=>field('比分 '+(j+1),m.scores?.[j]||'',v=>{m.scores=m.scores||['','',''];m.scores[j]=v;persist()}));
+    item.appendChild(grid);root.appendChild(item);
+  });
+}
+async function readRemote(path){const r=await fetch(path+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
+async function refresh(){
+  E('daily-state').textContent='正在讀取已發布的每日資料……';
+  try{
+    const status=await readRemote('output/status.json');
+    const day=(status.window_start||'').slice(0,10);
+    currentDay=day;
+    let message='最近執行：'+(status.updated_at||'未知')+'\n資料狀態：'+status.status+
+      '\n指定時段賽事：'+(status.window_fixture_count??'—')+' 場，完整盤口：'+(status.complete_odds_count??'—')+' 場';
+    if(status.message)message+='\n'+status.message;
+    E('daily-state').textContent=message;
+    try{
+      const calendar=await readRemote('output/fixtures.json');
+      const summary=Object.entries(calendar.league_counts||{}).map(x=>x[0]+' '+x[1]+'场').join('、');
+      const rows=(calendar.fixtures||[]).map(m=>m.kickoff.slice(5,16).replace('T',' ')+' '+m.league+'｜'+m.home+' vs '+m.away+(m.has_complete_odds?' ✓':' 盘未齐'));
+      E('fixtures-list').textContent='联赛场数：'+(summary||'—')+'\n\n'+(rows.join('\n')||'该时段暂无已取得的赛事');
+    }catch(ex){E('fixtures-list').textContent='完整賽程尚未發布：'+ex.message}
+    if(status.status==='analysis_ready'){
+      const data=await readRemote('output/analysis.json');
+      if(!data.matches||!data.matches.length)throw Error('分析檔案沒有賽事');
+      const cached=JSON.parse(localStorage.getItem(STORE)||'null');
+      E('data').value=cached&&cached.date===day?cached.source:JSON.stringify(data,null,2);
+      renderEditors();make();
+      if(cached&&cached.date===day&&cached.copy)E('copy').value=cached.copy;
+    }else{
+      note('目前沒有可用的當日已驗證分析；不會自動產生假盤口或假推薦。');
+    }
+  }catch(ex){E('daily-state').textContent='每日產出尚未發布或讀取失敗：'+ex.message;
+    note('可以人工載入已核實 JSON；工作台不會自行捏造賽事。')}
+}
+function download(name,blob){
+  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+E('refresh').onclick=refresh;E('make').onclick=make;
+E('check').onclick=()=>{try{const errs=validate(loadJson());note(errs.length?errs.join('\n'):'資料格式正確（不代表已核實網站資料）')}catch(e){note(e.message)}};
+E('file').onchange=async ev=>{const f=ev.target.files?.[0];if(!f)return;E('data').value=await f.text();renderEditors();make()};
+E('sample').onclick=()=>{E('data').value=JSON.stringify({source:'',verified_at:'',matches:[{id:'',league:'',home:'',away:'',kickoff:'',source_url:'',odds_checked_at:'',asian_open:[],asian_live:[],euro_live:[],ou_open:[],ou_live:[],analysis:'',trend:'大 2.5',scores:['2-1','1-2','1-1']}]},null,2);renderEditors()};
+E('save').onclick=()=>download('football-matches.json',new Blob([E('data').value],{type:'application/json'}));
+E('png').onclick=()=>canvas.toBlob(b=>{if(b)download('football-poster.png',b)},'image/png');
+E('copytext').onclick=async()=>{try{await navigator.clipboard.writeText(E('copy').value);note('文案已複製')}catch{E('copy').select();note('請手動複製已選取的文案')}};
+E('copy').oninput=()=>{try{const x=JSON.parse(localStorage.getItem(STORE)||'null');if(x){x.copy=E('copy').value;localStorage.setItem(STORE,JSON.stringify(x))}}catch{}};
+E('data').onchange=()=>{renderEditors();make()};
+refresh();
+</script>
+</body></html>
