@@ -162,10 +162,13 @@ def browser_source():
     global source arrays only, and leave missing market groups incomplete.
     """
     from playwright.sync_api import sync_playwright
+    import shutil
 
     with sync_playwright() as p:
-        browser = p.chromium.launch(channel="chrome", headless=True,
-                                    args=["--no-sandbox", "--disable-dev-shm-usage"])
+        chrome = shutil.which("google-chrome") or shutil.which("chromium")
+        options = {"executable_path": chrome} if chrome else {}
+        browser = p.chromium.launch(headless=True,
+                                    args=["--no-sandbox", "--disable-dev-shm-usage"], **options)
         try:
             page = browser.new_page(locale="zh-CN", timezone_id="Asia/Taipei")
             page.goto("https://live.titan007.com/", wait_until="domcontentloaded", timeout=35000)
