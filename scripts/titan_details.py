@@ -13,7 +13,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-INDEX = "https://bf.titan007.com/football/"
+INDEX = "https://www.titan007.com/index.htm"
 MAX_DETAIL_PAGES = 3
 ALLOWED_HOSTS = {"bf.titan007.com", "www.titan007.com", "titan007.com", "vip.titan007.com", "zq.titan007.com", "info.titan007.com", "1x2.titan007.com"}
 UA = "FootballWorkspaceResearch/0.2 (low-frequency diagnostic)"
@@ -68,6 +68,8 @@ def candidate_urls(index_html):
         parsed=urllib.parse.urlparse(url)
         if parsed.scheme not in ("https","http") or parsed.hostname not in ALLOWED_HOSTS:
             continue
+        if parsed.hostname not in ("info.titan007.com", "1x2.titan007.com", "vip.titan007.com"):
+            continue
         path=parsed.path
         query=urllib.parse.parse_qs(parsed.query)
         match=re.search(r"/(?:analysis|oddslist)/(\d{5,})(?:cn)?\.htm",path,re.I)
@@ -84,7 +86,7 @@ def candidate_urls(index_html):
         item["source_urls"].append(url)
         if not item["link_label"] and link["text"]:
             item["link_label"]=link["text"]
-        if re.search(r"/analysis/\d{5,}cn\.htm",path,re.I):
+        if parsed.hostname == "info.titan007.com" and re.search(r"/analysis/\d{5,}cn\.htm",path,re.I):
             item["url"]=url
     return [{**item,"url":item["url"] or item["source_urls"][0]} for item in found.values()]
 
@@ -92,6 +94,8 @@ def summarize(candidate):
     item={**candidate,"verified":False}
     try:
         response=request(candidate["url"])
+        if urllib.parse.urlparse(response["url"]).hostname not in ALLOWED_HOSTS:
+            raise ValueError("Unexpected redirect host")
         parser=Links()
         parser.feed(response["html"])
         title=" ".join(" ".join(parser.title_parts).split())
@@ -99,7 +103,7 @@ def summarize(candidate):
         plain=re.sub(r"<[^>]+>"," ",plain)
         plain=html.unescape(plain)
         plain=" ".join(plain.split())
-        item.update({"http_status":response["status"],"final_url":response["url"],
+        item.update({"sport_check":"rejected_nonfootball" if re.search(r"\bNBA\b|basketball|篮球|籃球|棒球|baseball",title,re.I) else "unverified", "http_status":response["status"],"final_url":response["url"],
                      "page_title":title[:200],"html_bytes":response["bytes"],
                      "visible_text_excerpt":plain[:600],
                      "has_asian_keywords":bool(re.search("亚盘|亞盤|让球|讓球",plain)),
@@ -114,24 +118,12 @@ def main():
             "source":INDEX,"status":"unverified","detail_pages":[],"candidate_count":0,
             "note":"Page titles, text excerpts and keyword flags are diagnostics only; no odds or fixture has been validated."}
     try:
-        local_today=(dt.datetime.now(dt.timezone.utc)+dt.timedelta(hours=8)).date()
-        football_pages=[
-            "https://bf.titan007.com/football/Next_"+day.strftime("%Y%m%d")+".htm"
-            for day in (local_today,local_today+dt.timedelta(days=1))
-        ]
-        report["football_pages"]=football_pages
-        fetched=[]
-        for url in football_pages:
-            try:
-                response=request(url)
-                fetched.append(response["html"])
-                report.setdefault("page_results",[]).append({"url":url,"http_status":response["status"],"html_bytes":response["bytes"]})
-            except (OSError,ValueError) as e:
-                report.setdefault("page_results",[]).append({"url":url,"error":type(e).__name__+": "+str(e)[:180]})
-        if not fetched:
-            raise ValueError("Football-specific schedule pages unavailable")
-        response={"html":"\\n".join(fetched)}
-        report["index_status"]=200
+        # Dated football pages timed out in previous GitHub runs.
+        # Probe reachable homepage, but only accept football-specific hosts.
+        report["football_pages"]=[INDEX]
+        response=request(INDEX)
+        report["page_results"]=[{"url":INDEX,"http_status":response["status"],"html_bytes":response["bytes"]}]
+        report["index_status"]=response["status"]
         candidates=candidate_urls(response["html"])
         parser=Links()
         parser.feed(response["html"])
@@ -143,8 +135,9 @@ def main():
         report["matching_raw_count"]=sum(bool(re.search(r"(?:analysis/|oddslist/)\d{5,}",link["href"],re.I)) for link in parser.links)
         report["raw_html_match_count"]=len(re.findall(r"(?:analysis/|oddslist/)\d{5,}",response["html"],re.I))
         report["candidate_count"]=len(candidates)
-        report["scope"]="football-specific schedule pages only; candidates not verified"
+        report["scope"]="homepage links restricted to football analysis/odds hosts; candidates not verified"
         report["candidate_preview"]=[{"match_id":c["match_id"],"url":c["url"],"source_urls":c["source_urls"][:5]} for c in candidates[:10]]
+        candidates.sort(key=lambda x: (not x["url"].startswith("https://info.titan007.com/analysis/"), x["match_id"]))
         for candidate in candidates[:MAX_DETAIL_PAGES]:
             report["detail_pages"].append(summarize(candidate))
         report["status"]="sampled" if report["detail_pages"] else "no_detail_candidates"
