@@ -1,6 +1,12 @@
 name: Daily football AI production
 
 on:
+  push:
+    paths:
+      - 'scripts/**'
+      - 'tests/**'
+      - 'index.html'
+      - '.github/workflows/daily.yml'
   schedule:
     # 08:00 UTC = 16:00 Asia/Taipei; public cron may start a little late.
     - cron: '0 8 * * *'
