@@ -66,7 +66,7 @@ def candidate_urls(index_html):
     for link in parser.links:
         url=urllib.parse.urljoin(INDEX,html.unescape(link["href"]))
         parsed=urllib.parse.urlparse(url)
-        if parsed.scheme!="https" or parsed.hostname not in ALLOWED_HOSTS:
+        if parsed.scheme not in ("https","http") or parsed.hostname not in ALLOWED_HOSTS:
             continue
         m=re.search(r"(?:analysis/|oddslist/)(\d{5,})",parsed.path,re.I)
         if not m:
@@ -103,6 +103,12 @@ def main():
         response=request(INDEX)
         report["index_status"]=response["status"]
         candidates=candidate_urls(response["html"])
+        parser=Links()
+        parser.feed(response["html"])
+        report["total_anchor_links"]=len(parser.links)
+        report["matching_raw_links"]=[link for link in parser.links if re.search(r"(?:analysis/|oddslist/)\\d{5,}",link["href"],re.I)][:12]
+        report["matching_raw_count"]=sum(bool(re.search(r"(?:analysis/|oddslist/)\\d{5,}",link["href"],re.I)) for link in parser.links)
+        report["raw_html_match_count"]=len(re.findall(r"(?:analysis/|oddslist/)\\d{5,}",response["html"],re.I))
         report["candidate_count"]=len(candidates)
         for candidate in candidates[:MAX_DETAIL_PAGES]:
             report["detail_pages"].append(summarize(candidate))
@@ -117,6 +123,6 @@ def main():
     for item in report["detail_pages"]:
         print("ID:",item["match_id"],"HTTP:",item.get("http_status"),"Title:",item.get("page_title","")[:90],"Error:",item.get("error",""))
     if report["status"]!="sampled":
-        raise SystemExit("STOP: no detail pages sampled")
+        print("DIAGNOSTIC ONLY: no detail pages sampled; see artifact for raw link examples")
 if __name__=="__main__":
     main()
