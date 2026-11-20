@@ -47,7 +47,7 @@ def main():
             h,a=map(int,scores[0].split("-"))
         except (ValueError,AttributeError):
             raise SystemExit(f"STOP: invalid score fixture {i}")
-        if not all(isinstance(score,str) and __import__("re").fullmatch(r"\\d{1,2}-\\d{1,2}",score) for score in scores):
+        if not all(isinstance(score,str) and __import__("re").fullmatch(r"\d{1,2}-\d{1,2}",score) for score in scores):
             raise SystemExit(f"STOP: invalid scores fixture {i}")
         trend=str(m.get("trend","")).strip()
         if not trend or trend in ("主勝","客勝","平局"):
