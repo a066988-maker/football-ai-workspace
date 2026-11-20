@@ -225,6 +225,74 @@ def browser_source():
                              "browser_market_arrays": len(payload["markets"])}
 
 
+
+ESPN_LEAGUES = {
+    "eng.1": "英超", "eng.2": "英冠", "esp.1": "西甲",
+    "ita.1": "意甲", "ger.1": "德甲", "fra.1": "法甲",
+    "uefa.champions": "欧冠", "uefa.europa": "欧联",
+    "ned.1": "荷甲", "por.1": "葡超", "jpn.1": "日职",
+    "aus.1": "澳超", "usa.1": "美职联",
+}
+
+
+def parse_espn_events(data, league, start, end):
+    """Independent schedule-only fallback. ESPN IDs are never Titan IDs."""
+    found = []
+    for event in data.get("events", []):
+        try:
+            when = dt.datetime.fromisoformat(event["date"].replace("Z", "+00:00")).astimezone(ZONE)
+            if not start <= when < end:
+                continue
+            competitors = event["competitions"][0]["competitors"]
+            names = {row["homeAway"]: clean(row["team"]["displayName"]) for row in competitors}
+            home, away = names["home"], names["away"]
+            eid = str(event["id"])
+            if not eid.isdigit() or not home or not away or home == away:
+                continue
+            if event.get("status", {}).get("type", {}).get("completed"):
+                continue
+            urls = [link.get("href", "") for link in event.get("links", [])]
+            source_url = next((u for u in urls if u.startswith("https://www.espn.com/")), "")
+            if not source_url:
+                source_url = "https://www.espn.com/soccer/match/_/gameId/" + eid
+            found.append({
+                "id": "espn-" + eid, "league": league, "home": home, "away": away,
+                "kickoff": when.isoformat(timespec="minutes"), "state": -1,
+                "source_url": source_url,
+            })
+        except (KeyError, IndexError, TypeError, ValueError):
+            continue
+    return found
+
+
+def espn_schedule(start, end):
+    """Used only to show schedules when Titan is unreachable; never creates odds."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    days = sorted({start.date(), end.date()})
+    jobs = [(slug, label, day) for slug, label in ESPN_LEAGUES.items() for day in days]
+
+    def task(job):
+        slug, label, day = job
+        url = "https://site.api.espn.com/apis/site/v2/sports/soccer/" + slug + "/scoreboard?dates=" + day.strftime("%Y%m%d")
+        req = urllib.request.Request(url, headers={"User-Agent": "python-urllib/3.11",
+                                                   "Accept": "application/json"})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            return parse_espn_events(json.load(response), label, start, end)
+
+    fixtures, failures = {}, 0
+    with ThreadPoolExecutor(max_workers=5) as executor:
+        futures = [executor.submit(task, job) for job in jobs]
+        for future in as_completed(futures):
+            try:
+                for fixture in future.result():
+                    fixtures[fixture["id"]] = fixture
+            except Exception:
+                failures += 1
+    if not fixtures and failures == len(jobs):
+        raise ValueError("Titan and ESPN schedule sources unavailable")
+    return list(fixtures.values()), {"espn_requests": len(jobs), "espn_failures": failures}
+
+
 def collect():
     OUT.mkdir(parents=True, exist_ok=True)
     DATA.mkdir(parents=True, exist_ok=True)
@@ -252,9 +320,18 @@ def collect():
             report["collection_method"] = "direct_public_feed"
         except (OSError, ValueError, urllib.error.URLError) as direct_exc:
             report["direct_error"] = type(direct_exc).__name__ + ": " + str(direct_exc)[:160]
-            fixtures, odds, diagnostics = browser_source()
-            report["collection_method"] = "browser_loaded_public_source"
-            report["browser_diagnostics"] = diagnostics
+            try:
+                fixtures, odds, diagnostics = browser_source()
+                report["collection_method"] = "browser_loaded_public_source"
+                report["browser_diagnostics"] = diagnostics
+            except Exception as browser_exc:
+                report["browser_error"] = type(browser_exc).__name__ + ": " + str(browser_exc)[:160]
+                fixtures, diagnostics = espn_schedule(start, end)
+                odds = {}
+                report["collection_method"] = "espn_auxiliary_schedule_only"
+                report["schedule_diagnostics"] = diagnostics
+                report["source"] = "https://site.api.espn.com/apis/site/v2/sports/soccer/"
+                report["source_note"] = "ESPN schedule only. Titan odds unavailable; no AI predictions."
         window = [m for m in fixtures
                   if start <= dt.datetime.fromisoformat(m["kickoff"]) < end
                   and m["state"] in (-1, 0)]
@@ -300,8 +377,8 @@ def collect():
             }, ensure_ascii=False, indent=2), encoding="utf-8")
             report["status"] = "verified_ready_for_ai"
         else:
-            report["status"] = "insufficient_verified_odds"
-            report["message"] = "Fewer than three scheduled matches have all opening/current odds."
+            report["status"] = "schedule_only_no_titan_odds" if report.get("collection_method") == "espn_auxiliary_schedule_only" else "insufficient_verified_odds"
+            report["message"] = "Fewer than three scheduled matches have all opening/current Titan odds; AI analysis not run."
     except Exception as exc:
         report["status"] = "source_error"
         report["message"] = type(exc).__name__ + ": " + str(exc)[:240]
