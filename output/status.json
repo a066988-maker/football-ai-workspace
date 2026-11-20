@@ -1,11 +1,22 @@
 {
-  "updated_at": "2026-11-21T07:57:33+08:00",
-  "status": "source_error",
+  "updated_at": "2026-11-21T07:58:55+08:00",
+  "status": "insufficient_verified_odds",
   "window_start": "2026-11-21T16:00+08:00",
   "window_end": "2026-11-22T08:00+08:00",
   "source": "https://livestatic.titan007.com/vbsxml/",
   "source_note": "Public Titan007 football feed; no invented matches/odds",
   "direct_error": "RemoteDisconnected: Remote end closed connection without response",
-  "message": "ModuleNotFoundError: No module named 'playwright'",
-  "finished_at": "2026-11-20T23:57:35.648456+00:00"
+  "collection_method": "browser_loaded_public_source",
+  "browser_diagnostics": {
+    "title": "足球比分_足球直播_足球比分直播-新球体育-球探体育",
+    "browser_rows": 511,
+    "browser_market_arrays": 0
+  },
+  "feed_fixture_count": 0,
+  "feed_market_count": 0,
+  "window_fixture_count": 0,
+  "complete_odds_count": 0,
+  "selected_count": 0,
+  "message": "Fewer than three scheduled matches have all opening/current Titan odds; AI analysis not run.",
+  "finished_at": "2026-11-20T23:59:06.588061+00:00"
 }
