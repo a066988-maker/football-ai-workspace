@@ -154,6 +154,74 @@ def selection_rank(m):
     return (priority, m["kickoff"], m["id"])
 
 
+
+def browser_source():
+    """Use the public site's loaded JS if direct feed connections are blocked.
+
+    Never infer market data from the presence of a UI element. Read actual
+    global source arrays only, and leave missing market groups incomplete.
+    """
+    from playwright.sync_api import sync_playwright
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(channel="chrome", headless=True,
+                                    args=["--no-sandbox", "--disable-dev-shm-usage"])
+        try:
+            page = browser.new_page(locale="zh-CN", timezone_id="Asia/Taipei")
+            page.goto("https://live.titan007.com/", wait_until="domcontentloaded", timeout=35000)
+            page.wait_for_function("Array.isArray(window.A) && window.A.length > 2",
+                                   timeout=25000)
+            page.wait_for_timeout(1500)
+            payload = page.evaluate("""() => {
+                const schedule = Array.isArray(window.A) ? window.A.slice(1) : [];
+                const markets = (typeof window.sData === 'object' && window.sData)
+                  ? Object.entries(window.sData).filter(([id, rows]) =>
+                      /^\d{5,10}$/.test(id) && Array.isArray(rows)).slice(0, 3000)
+                  : [];
+                return {schedule, markets, title: document.title};
+            }""")
+        finally:
+            browser.close()
+    fixtures = []
+    for row in payload["schedule"]:
+        if not isinstance(row, list) or len(row) < 18:
+            continue
+        fields = [str(x) if x is not None else "" for x in row]
+        if not fields[0].isdigit():
+            continue
+        # Reuse the same source-field interpretation as the direct-feed parser.
+        time = stamp(fields[11])
+        try:
+            state = int(fields[13])
+        except ValueError:
+            continue
+        if not time:
+            continue
+        home, away, league = clean(fields[5] or fields[4]), clean(fields[8] or fields[7]), clean(fields[2])
+        if not (home and away and league) or home == away:
+            continue
+        fixtures.append({
+            "id": fields[0], "league": league, "home": home, "away": away,
+            "kickoff": time.isoformat(timespec="minutes"), "state": state,
+            "source_url": "https://zq.titan007.com/analysis/" + fields[0] + "cn.htm",
+        })
+    odds = {}
+    for match_id, groups in payload["markets"]:
+        if not isinstance(groups, list) or len(groups) < 3:
+            continue
+        parsed = {}
+        for name, group in zip(("asian", "euro", "ou"), groups[:3]):
+            if not isinstance(group, list) or len(group) < 6:
+                continue
+            nums = [number(x) for x in group[:6]]
+            parsed[name + "_open"] = nums[:3]
+            parsed[name + "_live"] = nums[3:6]
+        odds[match_id] = parsed
+    return fixtures, odds, {"title": payload["title"][:100],
+                             "browser_rows": len(payload["schedule"]),
+                             "browser_market_arrays": len(payload["markets"])}
+
+
 def collect():
     OUT.mkdir(parents=True, exist_ok=True)
     DATA.mkdir(parents=True, exist_ok=True)
@@ -173,10 +241,17 @@ def collect():
         "source_note": "Public Titan007 football feed; no invented matches/odds",
     }
     try:
-        schedule_text = fetch("bfdata_ut.js")
-        odds_text = fetch("sbOddsData.js")
-        fixtures = fixture_rows(schedule_text)
-        odds = odds_rows(odds_text)
+        try:
+            schedule_text = fetch("bfdata_ut.js")
+            odds_text = fetch("sbOddsData.js")
+            fixtures = fixture_rows(schedule_text)
+            odds = odds_rows(odds_text)
+            report["collection_method"] = "direct_public_feed"
+        except (OSError, ValueError, urllib.error.URLError) as direct_exc:
+            report["direct_error"] = type(direct_exc).__name__ + ": " + str(direct_exc)[:160]
+            fixtures, odds, diagnostics = browser_source()
+            report["collection_method"] = "browser_loaded_public_source"
+            report["browser_diagnostics"] = diagnostics
         window = [m for m in fixtures
                   if start <= dt.datetime.fromisoformat(m["kickoff"]) < end
                   and m["state"] in (-1, 0)]
@@ -224,7 +299,7 @@ def collect():
         else:
             report["status"] = "insufficient_verified_odds"
             report["message"] = "Fewer than three scheduled matches have all opening/current odds."
-    except (OSError, ValueError, urllib.error.URLError) as exc:
+    except Exception as exc:
         report["status"] = "source_error"
         report["message"] = type(exc).__name__ + ": " + str(exc)[:240]
         (OUT / "fixtures.json").unlink(missing_ok=True)
