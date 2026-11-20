@@ -181,7 +181,15 @@ def browser_source():
                   ? Object.entries(window.sData).filter(([id, rows]) =>
                       /^\d{5,10}$/.test(id) && Array.isArray(rows)).slice(0, 3000)
                   : [];
-                return {schedule, markets, title: document.title};
+                const oddsGroups = window.flashData?.bfOddsList?.items || [];
+                const example = oddsGroups.find(g => g?.oddsList?.items?.length);
+                return {schedule, markets, title: document.title,
+                    sample: schedule.filter(Array.isArray).slice(0, 2).map(r => r.slice(0, 20)),
+                    flashType: typeof window.flashData,
+                    oddsGroupCount: oddsGroups.length,
+                    oddsExample: example ? {id: example.sId,
+                        entries: example.oddsList.items.length,
+                        first: example.oddsList.items[0]} : null};
             }""")
         finally:
             browser.close()
@@ -222,7 +230,11 @@ def browser_source():
         odds[match_id] = parsed
     return fixtures, odds, {"title": payload["title"][:100],
                              "browser_rows": len(payload["schedule"]),
-                             "browser_market_arrays": len(payload["markets"])}
+                             "browser_market_arrays": len(payload["markets"]),
+                             "schedule_sample": payload.get("sample", []),
+                             "flash_type": payload.get("flashType"),
+                             "odds_group_count": payload.get("oddsGroupCount"),
+                             "odds_example": payload.get("oddsExample")}
 
 
 
