@@ -1,0 +1,237 @@
+"""Read Titan007's public football live feed. Do not invent fixtures or odds.
+
+Outputs a complete fixtures list and, only when at least 3 matches have complete
+opening/current Asian and totals plus European odds, a Gemini-ready verified file.
+The feed can fail or restrict GitHub Actions access; missing means missing.
+"""
+import datetime as dt
+import html
+import json
+import os
+import re
+import urllib.error
+import urllib.request
+from collections import Counter
+from pathlib import Path
+from zoneinfo import ZoneInfo
+
+ROOT = Path(__file__).resolve().parents[1]
+DATA = ROOT / "data"
+OUT = ROOT / "output"
+ZONE = ZoneInfo("Asia/Taipei")
+FEED_BASE = "https://livestatic.titan007.com/vbsxml/"
+HEADERS = {
+    "User-Agent": "Mozilla/5.0 (compatible; PersonalFootballResearch/1.0)",
+    "Referer": "https://live.titan007.com/",
+    "Accept": "text/javascript,text/plain,*/*",
+}
+LEAGUE_PRIORITY = ("英超", "西甲", "意甲", "德甲", "法甲", "欧冠", "歐冠", "欧联", "歐聯",
+                   "英冠", "葡超", "荷甲", "日职", "日職", "澳超", "美职", "美職")
+
+
+def fetch(name):
+    if name not in ("bfdata_ut.js", "sbOddsData.js"):
+        raise ValueError("Unsupported endpoint")
+    req = urllib.request.Request(FEED_BASE + name, headers=HEADERS)
+    with urllib.request.urlopen(req, timeout=18) as response:
+        if response.status != 200:
+            raise ValueError("Source HTTP " + str(response.status))
+        raw = response.read(5_000_000)
+    if not raw:
+        raise ValueError("Empty source: " + name)
+    for encoding in ("utf-8-sig", "gb18030"):
+        try:
+            return raw.decode(encoding)
+        except UnicodeError:
+            pass
+    raise ValueError("Cannot decode source: " + name)
+
+
+def stamp(value):
+    """Titan feed timestamp: year, zero-based-month, day, hour, minute, second."""
+    try:
+        p = [int(x) for x in value.split(",")]
+        if len(p) < 5:
+            return None
+        return dt.datetime(p[0], p[1] + 1, p[2], p[3], p[4],
+                           p[5] if len(p) > 5 else 0, tzinfo=ZONE)
+    except (ValueError, IndexError, OverflowError):
+        return None
+
+
+def clean(value):
+    return html.unescape(re.sub(r"<[^>]*>", "", value or "")).strip()
+
+
+def fixture_rows(source):
+    """Each A[i] field is caret-separated. Field positions follow the public feed."""
+    pattern = r'A\[\d+\]\s*=\s*"([^"\r\n]*)"\.split\(\s*["\x27]\^["\x27]\s*\)'
+    items = {}
+    for match in re.finditer(pattern, source):
+        f = match.group(1).split("^")
+        if len(f) < 18 or not f[0].isdigit():
+            continue
+        when = stamp(f[11])
+        if not when:
+            continue
+        home, away, league = clean(f[5] or f[4]), clean(f[8] or f[7]), clean(f[2])
+        if not (home and away and league) or home == away:
+            continue
+        try:
+            state = int(f[13])
+        except ValueError:
+            continue
+        items[f[0]] = {
+            "id": f[0], "league": league, "home": home, "away": away,
+            "kickoff": when.isoformat(timespec="minutes"),
+            "state": state,
+            "source_url": "https://zq.titan007.com/analysis/" + f[0] + "cn.htm",
+        }
+    return list(items.values())
+
+
+def number(value):
+    try:
+        result = float(str(value).strip().strip('"').strip("'"))
+        return result if result == result and abs(result) < 1_000_000 else None
+    except (ValueError, TypeError):
+        return None
+
+
+def triple(group, offset):
+    fields = [x.strip() for x in group.split(",")]
+    if len(fields) < offset + 3:
+        return None
+    values = [number(x) for x in fields[offset:offset + 3]]
+    if any(x is None for x in values):
+        return None
+    return values
+
+
+def odds_rows(source):
+    """Parse sData[id]=[asian,europe,total,...]; each market has open and current triples."""
+    rows = {}
+    for match in re.finditer(r"sData\[(\d+)\]\s*=\s*\[([\s\S]*?)\]\s*;", source):
+        groups = re.findall(r"\[([^\[\]]*)\]", match.group(2))
+        if len(groups) < 3:
+            continue
+        values = {}
+        for name, group in zip(("asian", "euro", "ou"), groups[:3]):
+            values[name + "_open"] = triple(group, 0)
+            values[name + "_live"] = triple(group, 3)
+        rows[match.group(1)] = values
+    return rows
+
+
+def valid(price, lo=0.1, hi=100):
+    return price is not None and lo <= price <= hi
+
+
+def usable_odds(odds):
+    if not odds:
+        return False
+    for market in ("asian", "euro", "ou"):
+        for phase in ("open", "live"):
+            data = odds.get(market + "_" + phase)
+            if not data or len(data) != 3:
+                return False
+            left, line, right = data
+            if market == "euro":
+                if not all(valid(x, 1.01, 500) for x in data):
+                    return False
+            elif market == "asian":
+                if not (valid(left) and valid(right) and -7 <= line <= 7):
+                    return False
+            else:
+                if not (valid(left) and valid(right) and 0.25 <= line <= 10):
+                    return False
+    return True
+
+
+def selection_rank(m):
+    priority = next((i for i, name in enumerate(LEAGUE_PRIORITY)
+                     if name in m["league"]), len(LEAGUE_PRIORITY))
+    return (priority, m["kickoff"], m["id"])
+
+
+def collect():
+    OUT.mkdir(parents=True, exist_ok=True)
+    DATA.mkdir(parents=True, exist_ok=True)
+    # Prevent yesterday's fully verified input from leaking into today's analysis.
+    verified_path = DATA / "verified_matches.json"
+    verified_path.unlink(missing_ok=True)
+    now = dt.datetime.now(ZONE)
+    today = now.date()
+    start = dt.datetime.combine(today, dt.time(16), ZONE)
+    end = start + dt.timedelta(hours=16)
+    report = {
+        "updated_at": now.isoformat(timespec="seconds"),
+        "status": "fetching",
+        "window_start": start.isoformat(timespec="minutes"),
+        "window_end": end.isoformat(timespec="minutes"),
+        "source": "https://livestatic.titan007.com/vbsxml/",
+        "source_note": "Public Titan007 football feed; no invented matches/odds",
+    }
+    try:
+        schedule_text = fetch("bfdata_ut.js")
+        odds_text = fetch("sbOddsData.js")
+        fixtures = fixture_rows(schedule_text)
+        odds = odds_rows(odds_text)
+        window = [m for m in fixtures
+                  if start <= dt.datetime.fromisoformat(m["kickoff"]) < end
+                  and m["state"] in (-1, 0)]
+        window.sort(key=lambda m: (m["kickoff"], m["id"]))
+        available = []
+        for fixture in window:
+            market = odds.get(fixture["id"])
+            fixture["has_complete_odds"] = usable_odds(market)
+            if not fixture["has_complete_odds"]:
+                continue
+            # These numbers are direct source values; Asian sign conventions are
+            # not interpreted as a home/away side without a second check.
+            record = dict(fixture)
+            record.update({
+                "odds_checked_at": now.isoformat(timespec="seconds"),
+                "asian_open": market["asian_open"],
+                "asian_live": market["asian_live"],
+                "euro_live": market["euro_live"],
+                "ou_open": market["ou_open"],
+                "ou_live": market["ou_live"],
+            })
+            available.append(record)
+        ranked = sorted(available, key=selection_rank)[:4]
+        counts = dict(sorted(Counter(m["league"] for m in window).items()))
+        (OUT / "fixtures.json").write_text(
+            json.dumps({
+                "date": today.isoformat(), "source": report["source"],
+                "window_start": report["window_start"], "window_end": report["window_end"],
+                "league_counts": counts, "fixtures": window
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+        report.update({
+            "feed_fixture_count": len(fixtures),
+            "feed_market_count": len(odds),
+            "window_fixture_count": len(window),
+            "complete_odds_count": len(available),
+            "selected_count": len(ranked),
+        })
+        if len(ranked) >= 3:
+            verified_path.write_text(json.dumps({
+                "source": "Titan007 live public football feed",
+                "verified_at": now.isoformat(timespec="seconds"),
+                "matches": ranked,
+            }, ensure_ascii=False, indent=2), encoding="utf-8")
+            report["status"] = "verified_ready_for_ai"
+        else:
+            report["status"] = "insufficient_verified_odds"
+            report["message"] = "Fewer than three scheduled matches have all opening/current odds."
+    except (OSError, ValueError, urllib.error.URLError) as exc:
+        report["status"] = "source_error"
+        report["message"] = type(exc).__name__ + ": " + str(exc)[:240]
+        (OUT / "fixtures.json").unlink(missing_ok=True)
+    (OUT / "status.json").write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    print(json.dumps(report, ensure_ascii=False))
+    return report
+
+
+if __name__ == "__main__":
+    collect()
