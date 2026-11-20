@@ -106,6 +106,9 @@ def main():
         parser=Links()
         parser.feed(response["html"])
         report["total_anchor_links"]=len(parser.links)
+        report["link_samples"]=[{"href":link["href"][:240],"label":link["text"][:100]} for link in parser.links[:80]]
+        report["numeric_link_samples"]=[{"href":link["href"][:240],"label":link["text"][:100]} for link in parser.links if re.search(r"\d{5,}",link["href"])][:60]
+        report["football_link_samples"]=[{"href":link["href"][:240],"label":link["text"][:100]} for link in parser.links if re.search(r"analysis|odds|match|live|detail|football|score|亚盘|欧赔",link["href"]+" "+link["text"],re.I)][:60]
         report["matching_raw_links"]=[link for link in parser.links if re.search(r"(?:analysis/|oddslist/)\\d{5,}",link["href"],re.I)][:12]
         report["matching_raw_count"]=sum(bool(re.search(r"(?:analysis/|oddslist/)\\d{5,}",link["href"],re.I)) for link in parser.links)
         report["raw_html_match_count"]=len(re.findall(r"(?:analysis/|oddslist/)\\d{5,}",response["html"],re.I))
