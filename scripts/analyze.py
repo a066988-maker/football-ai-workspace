@@ -1,60 +1,131 @@
-"""Analyze user-verified match data with Gemini. No invented fixtures or odds."""
-import json, os, sys, urllib.request, urllib.error
+"""Generate Xiaohongshu match analysis only from verified Titan fixture/odds records."""
+import json
+import os
+import re
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 INPUT = ROOT / "data" / "verified_matches.json"
 OUTPUT = ROOT / "output" / "analysis.json"
-REQUIRED = ("league","home","away","kickoff","source_url","odds_checked_at","asian_open","asian_live","euro_live","ou_open","ou_live","analysis")
+FIELDS = ("id", "league", "home", "away", "kickoff", "source_url",
+          "odds_checked_at", "asian_open", "asian_live", "euro_live",
+          "ou_open", "ou_live")
+
+
+def validate_input(data):
+    matches = data.get("matches", [])
+    if not 3 <= len(matches) <= 5:
+        raise ValueError("Need 3–5 verified fixtures")
+    seen = set()
+    for i, item in enumerate(matches, 1):
+        missing = [key for key in FIELDS if item.get(key) is None or item.get(key) == ""]
+        if missing:
+            raise ValueError("Fixture %s missing %s" % (i, missing))
+        if not re.fullmatch(r"\d{5,10}", str(item["id"])):
+            raise ValueError("Invalid Titan match ID")
+        if item["id"] in seen:
+            raise ValueError("Duplicate fixture ID")
+        seen.add(item["id"])
+        if item["source_url"] != "https://zq.titan007.com/analysis/" + str(item["id"]) + "cn.htm":
+            raise ValueError("Fixture URL does not match Titan ID")
+        for key in ("asian_open", "asian_live", "euro_live", "ou_open", "ou_live"):
+            if not isinstance(item[key], list) or len(item[key]) != 3:
+                raise ValueError("Incomplete odds: " + key)
+            if not all(isinstance(x, (int, float)) and not isinstance(x, bool) for x in item[key]):
+                raise ValueError("Non-numeric odds: " + key)
+        if not 0.25 <= item["ou_live"][1] <= 10:
+            raise ValueError("Invalid total goal line")
+    return matches
+
+
+def response_text(result):
+    candidates = result.get("candidates") or []
+    if not candidates:
+        raise ValueError("Gemini returned no candidates")
+    parts = candidates[0].get("content", {}).get("parts") or []
+    text = "".join(part.get("text", "") for part in parts)
+    if not text:
+        raise ValueError("Gemini returned no text")
+    return text
+
+
+def gemini(matches):
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY repository secret is unavailable")
+    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
+    if not re.fullmatch(r"gemini-[\w.\-]+", model):
+        raise ValueError("Invalid model")
+    instructions = """你是足球数据审核与小红书赛前分析作者。只基于输入的Titan007赛程、欧赔、亚盘、大小球，绝不编造伤停、阵容、交锋、新闻或水位。所有输出必须为简体中文并使用中国大陆常用足球队名，但不要修改输入球队/联赛的客观字段。
+输入盘口数组：[左侧赔率,盘口原始数值,右侧赔率]。亚洲盘口的正负号与主客方向尚未独立验证，因此本次推荐方向仅允许使用大小球（"大 X" 或 "小 X"），X必须等于对应比赛ou_live[1]的真实盘口数值；禁止主胜/客胜/平局作为趋势。预测分数需给三个不同的合理剧本，首选比分的总球数需与推荐大小方向不矛盾。结合盘路变化与已提供的欧赔做谨慎分析，不保证准确。分析每场约70-100个简体汉字。只输出JSON对象，结构：{"picks":[{"id":"比赛id原样字符串","analysis":"一段赛前分析","trend":"大 2.5","scores":["2-1","1-2","1-1"]}]}，逐场按输入顺序对应，不要补充其他键。以下为唯一输入数据：
+"""
+    payload = json.dumps({
+        "contents": [{"parts": [{"text": instructions + json.dumps(matches, ensure_ascii=False)}]}],
+        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.25}
+    }, ensure_ascii=False).encode("utf-8")
+    url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
+    req = urllib.request.Request(url, data=payload, method="POST", headers={
+        "Content-Type": "application/json",
+        "x-goog-api-key": api_key,
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=90) as reply:
+            result = json.load(reply)
+    except urllib.error.HTTPError as exc:
+        # Never print API keys or entire provider payloads.
+        raise ValueError("Gemini HTTP %s (quota, credentials or model issue)" % exc.code) from exc
+    return json.loads(response_text(result))
+
+
+def validate_picks(matches, result):
+    picks = result.get("picks", [])
+    if not isinstance(picks, list) or len(picks) != len(matches):
+        raise ValueError("Gemini pick count mismatch")
+    merged = []
+    for original, pick in zip(matches, picks):
+        if str(pick.get("id")) != str(original["id"]):
+            raise ValueError("Gemini changed match IDs or order")
+        trend = str(pick.get("trend", "")).strip().replace(" ", "")
+        match = re.fullmatch(r"(大|小)(\d+(?:\.\d+)?)", trend)
+        if not match:
+            raise ValueError("Trend must be over/under the actual source line")
+        direction, target = match.group(1), float(match.group(2))
+        line = float(original["ou_live"][1])
+        if abs(target - line) > 1e-6:
+            raise ValueError("Gemini invented or changed totals line")
+        scores = pick.get("scores")
+        if not isinstance(scores, list) or len(scores) != 3 or len(set(scores)) != 3:
+            raise ValueError("Need three different score scripts")
+        for s in scores:
+            if not isinstance(s, str) or not re.fullmatch(r"\d{1,2}-\d{1,2}", s):
+                raise ValueError("Invalid score format")
+        h, a = map(int, scores[0].split("-"))
+        if (direction == "大" and h + a <= line) or (direction == "小" and h + a >= line):
+            raise ValueError("First-choice score conflicts with totals recommendation")
+        analysis = pick.get("analysis", "")
+        if not isinstance(analysis, str) or len(analysis.strip()) < 15:
+            raise ValueError("Empty or insufficient analysis")
+        combined = {**original, "analysis": analysis.strip(),
+                    "trend": direction + " " + str(original["ou_live"][1]).rstrip("0").rstrip(".") if isinstance(original["ou_live"][1], float) else direction + " " + str(original["ou_live"][1]),
+                    "scores": scores}
+        merged.append(combined)
+    return merged
+
 
 def main():
     if not INPUT.exists():
-        raise SystemExit("STOP: data/verified_matches.json missing. No fixtures were invented.")
+        raise ValueError("No verified fixture input; analysis skipped")
     data = json.loads(INPUT.read_text(encoding="utf-8"))
-    matches = data.get("matches", [])
-    if not 3 <= len(matches) <= 5:
-        raise SystemExit("STOP: exactly 3–5 verified fixtures required")
-    for i, m in enumerate(matches, 1):
-        missing = [k for k in REQUIRED if not m.get(k)]
-        if missing or not str(m.get("source_url","")).startswith("https://"):
-            raise SystemExit(f"STOP: fixture {i} missing verified fields: {missing}")
-    key = os.environ.get("GEMINI_API_KEY")
-    if not key:
-        raise SystemExit("STOP: GEMINI_API_KEY secret missing")
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-    prompt = """你是足球賽事資料審核與分析助理。只使用下列提供的已核實資料，不得聲稱自己已瀏覽網站，不得編造賽程、盤口、傷停、新聞或概率。資料不足時明確標記資料不足。輸出純 JSON，結構為 {matches:[{league,home,away,kickoff,source_url,odds_checked_at,asian_open,asian_live,euro_live,ou_open,ou_live,analysis,trend,scores}]}，保留輸入賽事與來源欄位原值，analysis 使用簡體中文，trend 必須是亞洲讓球盤或大小球方向，格式如「主队 -0.5」或「大 2.5」，盤口數值必須直接來自輸入已驗證的 asian_live 或 ou_live，不得自行推定。scores 是三個如 1-0 的比分，按可能性排序。禁止投注保證語。輸入：\n""" + json.dumps(data, ensure_ascii=False)
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-    payload = json.dumps({"contents":[{"parts":[{"text":prompt}]}],"generationConfig":{"responseMimeType":"application/json","temperature":0.2}}).encode()
-    req = urllib.request.Request(url, data=payload, headers={"Content-Type":"application/json","x-goog-api-key":key}, method="POST")
-    try:
-        with urllib.request.urlopen(req, timeout=90) as response:
-            result = json.load(response)
-    except urllib.error.HTTPError as e:
-        raise SystemExit(f"Gemini API failed HTTP {e.code}: {e.read().decode()[:300]}")
-    answer = result["candidates"][0]["content"]["parts"][0]["text"]
-    parsed = json.loads(answer)
-    generated = parsed.get("matches",[])
-    if len(generated) != len(matches):
-        raise SystemExit("STOP: output fixture count mismatch")
-    for i,(original,m) in enumerate(zip(matches,generated),1):
-        for field in ("league","home","away","kickoff","source_url","odds_checked_at","asian_open","asian_live","euro_live","ou_open","ou_live"):
-            if m.get(field) != original.get(field):
-                raise SystemExit(f"STOP: AI modified source field {field} in fixture {i}")
-        scores=m.get("scores",[])
-        if len(scores)!=3:
-            raise SystemExit(f"STOP: fixture {i} must have three scores")
-        try:
-            h,a=map(int,scores[0].split("-"))
-        except (ValueError,AttributeError):
-            raise SystemExit(f"STOP: invalid score fixture {i}")
-        if not all(isinstance(score,str) and __import__("re").fullmatch(r"\d{1,2}-\d{1,2}",score) for score in scores):
-            raise SystemExit(f"STOP: invalid scores fixture {i}")
-        trend=str(m.get("trend","")).strip()
-        if not trend or trend in ("主勝","客勝","平局"):
-            raise SystemExit(f"STOP: fixture {i} trend must be Asian handicap or over/under")
+    matches = validate_input(data)
+    response = gemini(matches)
+    result = {"source": data["source"], "verified_at": data["verified_at"],
+              "matches": validate_picks(matches, response)}
     OUTPUT.parent.mkdir(exist_ok=True)
-    OUTPUT.write_text(json.dumps(parsed,ensure_ascii=False,indent=2),encoding="utf-8")
-    print("Output:", OUTPUT)
+    OUTPUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
+    print("Verified analysis written for", len(result["matches"]), "matches")
+
 
 if __name__ == "__main__":
     main()
