@@ -1,0 +1,53 @@
+name: Daily football AI production
+
+on:
+  schedule:
+    # 08:00 UTC = 16:00 Asia/Taipei; public cron may start a little late.
+    - cron: '0 8 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-football-production
+  cancel-in-progress: false
+
+jobs:
+  daily:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Verify parser safety checks
+        run: python -m unittest discover -s tests -v
+      - name: Collect Titan007 and generate Gemini analysis when verified
+        env:
+          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-2.5-flash
+        run: python scripts/daily.py
+      - name: Publish outcomes for the phone-friendly dashboard
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -d output ]; then
+            git add -A output/
+            if ! git diff --cached --quiet; then
+              git commit -m "Update football fixtures, verified picks and feed status"
+              git push
+            fi
+          fi
+      - name: Upload diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: daily-football-output
+          path: output/
+          retention-days: 7
+          if-no-files-found: ignore
