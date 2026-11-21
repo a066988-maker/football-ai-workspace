@@ -545,7 +545,9 @@ def collect():
                 "ou_live": market["ou_live"],
             })
             available.append(record)
-        ranked = sorted(available, key=selection_rank)[:4]
+        upcoming = [m for m in available
+                    if dt.datetime.fromisoformat(m["kickoff"]) > now + dt.timedelta(minutes=5)]
+        ranked = sorted(upcoming, key=selection_rank)[:4]
         counts = dict(sorted(Counter(m["league"] for m in window).items()))
         (OUT / "fixtures.json").write_text(
             json.dumps({
@@ -561,16 +563,20 @@ def collect():
             "selected_count": len(ranked),
         })
         if len(ranked) >= 3:
-            verified_path.write_text(json.dumps({
+            verified_payload = json.dumps({
                 "source": "Titan007 live public football feed",
                 "verified_at": now.isoformat(timespec="seconds"),
                 "matches": ranked,
-            }, ensure_ascii=False, indent=2), encoding="utf-8")
+            }, ensure_ascii=False, indent=2)
+            verified_path.write_text(verified_payload, encoding="utf-8")
+            (OUT / "verified_matches.json").write_text(verified_payload, encoding="utf-8")
             report["status"] = "verified_ready_for_ai"
         else:
+            (OUT / "verified_matches.json").unlink(missing_ok=True)
             report["status"] = "schedule_only_no_titan_odds" if report.get("collection_method") == "espn_auxiliary_schedule_only" else "insufficient_verified_odds"
             report["message"] = "Fewer than three scheduled matches have all opening/current Titan odds; AI analysis not run."
     except Exception as exc:
+        (OUT / "verified_matches.json").unlink(missing_ok=True)
         report["status"] = "source_error"
         report["message"] = type(exc).__name__ + ": " + str(exc)[:240]
         (OUT / "fixtures.json").unlink(missing_ok=True)
