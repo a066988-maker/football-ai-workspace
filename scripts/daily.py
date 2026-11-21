@@ -6,6 +6,7 @@ from pathlib import Path
 import collect
 import analyze
 import notify
+import render
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
@@ -27,12 +28,19 @@ def main():
         except (OSError, ValueError):
             pass
     analysis_path.unlink(missing_ok=True)
+    (OUT / "poster.png").unlink(missing_ok=True)
+    (OUT / "xiaohongshu.txt").unlink(missing_ok=True)
     report = collect.collect()
     if report["status"] == "verified_ready_for_ai":
         try:
             analyze.main()
             report["status"] = "analysis_ready"
             report["message"] = "Titan fixture/odds source validated and Gemini output checked."
+            try:
+                render.main()
+                report["assets"] = ["poster.png", "xiaohongshu.txt"]
+            except Exception as render_exc:
+                report["render_error"] = type(render_exc).__name__ + ": " + str(render_exc)[:160]
         except Exception as exc:
             report["status"] = "ai_error"
             report["message"] = type(exc).__name__ + ": " + str(exc)[:200]
