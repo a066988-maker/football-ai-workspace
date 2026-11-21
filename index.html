@@ -30,7 +30,7 @@ details summary{cursor:pointer;font-weight:700}input[type=file]{max-width:240px;
   <h2>每日執行狀態與自動查錯</h2>
   <div id="daily-state" class="small">正在檢查已發布的資料……</div><pre id="qa-state" class="small" style="white-space:pre-wrap">自動檢查記錄尚未載入</pre>
   <button id="refresh">讀取最新資料</button><button id="auto-png" class="secondary">下載自動生成 PNG</button><button id="auto-copy" class="secondary">讀取自動文案</button>
-  <details><summary>查看當日賽程與聯賽場數</summary><div id="fixtures-list">尚無賽程資料</div></details>
+  <h2>今日已取得的賽事（不等於已通過 AI 分析）</h2><div id="today-slate" class="small">尚未讀取今日賽程</div><details><summary>展開全部賽程與聯賽場數</summary><div id="fixtures-list">尚無賽程資料</div></details>
 </div>
 <div class="panel">
   <h2>可編輯的分析卡片</h2>
@@ -177,10 +177,17 @@ async function refresh(){
     }catch(ex){E('qa-state').textContent='尚無新版多輪查錯報告：'+ex.message}
     try{
       const calendar=await readRemote('output/fixtures.json');
+      const sameDay=calendar.date===taipeiToday();
+      const confirmed=(calendar.fixtures||[]).filter(m=>m.has_complete_odds);
+      const featured=(confirmed.length?confirmed:(calendar.fixtures||[])).slice(0,4);
+      const todayLines=featured.map(m=>'• '+m.kickoff.slice(5,16).replace('T',' ')+' '+m.league+'｜'+m.home+' vs '+m.away+(m.has_complete_odds?'（盤口已擷取，等待 AI 審核）':'（盤口未齊）'));
+      E('today-slate').textContent=sameDay
+        ? '已取得 '+(calendar.fixtures||[]).length+' 場，其中 '+confirmed.length+' 場有完整盤口。\n'+(todayLines.join('\n')||'目前尚無賽程')
+        : '尚無今天的賽程。上次資料日期：'+(calendar.date||'未知');
       const summary=Object.entries(calendar.league_counts||{}).map(x=>x[0]+' '+x[1]+'场').join('、');
       const rows=(calendar.fixtures||[]).map(m=>m.kickoff.slice(5,16).replace('T',' ')+' '+m.league+'｜'+m.home+' vs '+m.away+(m.has_complete_odds?' ✓':' 盘未齐'));
       E('fixtures-list').textContent='联赛场数：'+(summary||'—')+'\n\n'+(rows.join('\n')||'该时段暂无已取得的赛事');
-    }catch(ex){E('fixtures-list').textContent='完整賽程尚未發布：'+ex.message}
+    }catch(ex){E('fixtures-list').textContent='完整賽程尚未發布：'+ex.message;E('today-slate').textContent='今日賽程暫時讀取失敗'}
     if(status.status==='analysis_ready' && fresh){
       const data=await readRemote('output/analysis.json');
       if(!data.matches||!data.matches.length)throw Error('分析檔案沒有賽事');
