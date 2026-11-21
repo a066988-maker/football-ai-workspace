@@ -197,6 +197,19 @@ def browser_source():
                         entries: example.oddsList.items.length,
                         first: example.oddsList.items[0]} : null};
             }""")
+            # Diagnostic: check whether a genuine 1x2 detail page is reachable.
+            eid = (payload.get("oddsExample") or {}).get("id")
+            if eid and str(eid).isdigit():
+                try:
+                    page.goto("https://1x2.titan007.com/Oddslist/" + str(eid) + ".htm",
+                              wait_until="domcontentloaded", timeout=16000)
+                    row = page.locator("tr").filter(has_text=re.compile("Crow", re.I)).first
+                    payload["euroProbe"] = {
+                        "id": eid, "title": page.title()[:120],
+                        "crow_cells": [x.strip() for x in row.locator("td").all_text_contents()][:16],
+                    }
+                except Exception as detail_exc:
+                    payload["euroProbe"] = {"id": eid, "error": type(detail_exc).__name__ + ": " + str(detail_exc)[:120]}
         finally:
             browser.close()
     fixtures = []
@@ -242,7 +255,8 @@ def browser_source():
                              "pending_dom": payload.get("pendingDom", []),
                              "flash_type": payload.get("flashType"),
                              "odds_group_count": payload.get("oddsGroupCount"),
-                             "odds_example": payload.get("oddsExample")}
+                             "odds_example": payload.get("oddsExample"),
+                             "euro_probe": payload.get("euroProbe")}
 
 
 
