@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-21T08:07:48+08:00",
+  "updated_at": "2026-11-21T08:08:45+08:00",
   "status": "schedule_only_no_titan_odds",
   "window_start": "2026-11-21T16:00+08:00",
   "window_end": "2026-11-22T08:00+08:00",
@@ -13,28 +13,6 @@
     "browser_market_arrays": 0,
     "schedule_sample": [
       [
-        "3114927",
-        "#FFBA78",
-        "墨西丙",
-        "墨西丙",
-        "",
-        "东方守护者FC",
-        "東方守護者FC",
-        "",
-        "埃卡泰佩克FC",
-        "埃卡泰佩克FC",
-        "",
-        "06:00",
-        "2026,10,21,07,18,40",
-        "3",
-        "3",
-        "3",
-        "1",
-        "1",
-        "0",
-        "1"
-      ],
-      [
         "3114312",
         "#993333",
         "哥伦甲附",
@@ -47,12 +25,34 @@
         "聖達菲",
         "",
         "06:45",
-        "2026,10,21,07,52,45",
+        "2026,10,21,07,51,44",
         "3",
         "0",
         "0",
         "0",
         "0",
+        "0",
+        "0"
+      ],
+      [
+        "3111912",
+        "#00CCCC",
+        "阿甲",
+        "阿甲",
+        "",
+        "萨斯菲尔德",
+        "沙士菲",
+        "",
+        "贝尔格拉诺",
+        "貝爾格拉諾",
+        "",
+        "07:00",
+        "2026,10,21,08,05,11",
+        "3",
+        "0",
+        "1",
+        "0",
+        "1",
         "0",
         "0"
       ]
@@ -167,43 +167,6 @@
           "",
           "",
           "/cn/SubLeague.aspx?SclassID=423"
-        ]
-      },
-      {
-        "length": 69,
-        "fields": [
-          "3114929",
-          "#FFBA78",
-          "墨西丙",
-          "墨西丙",
-          "",
-          "莫雷利亚俱乐部",
-          "莫雷利亞俱樂部",
-          "",
-          "福里亚阿苏尔FC",
-          "福里亞阿蘇爾FC",
-          "",
-          "08:00",
-          "2026,10,21,08,00,00",
-          "0",
-          "0",
-          "0",
-          "",
-          "",
-          "0",
-          "0",
-          "0",
-          "0",
-          "",
-          "",
-          "0",
-          "0",
-          "",
-          "",
-          "",
-          "",
-          "",
-          ""
         ]
       },
       {
@@ -353,16 +316,53 @@
           "",
           "/cn/SubLeague.aspx?SclassID=341"
         ]
+      },
+      {
+        "length": 69,
+        "fields": [
+          "2997483",
+          "#098000",
+          "墨西联秋",
+          "墨西聯秋",
+          "",
+          "普埃布拉",
+          "普埃布拉",
+          "",
+          "圣路易斯竞技",
+          "聖路易斯競技",
+          "",
+          "09:00",
+          "2026,10,21,09,00,00",
+          "0",
+          "0",
+          "0",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "0",
+          "秋13",
+          "秋14",
+          "1",
+          "2",
+          "",
+          "1",
+          "True",
+          "0",
+          "",
+          "/cn/SubLeague.aspx?SclassID=140"
+        ]
       }
     ],
     "pending_dom": [
       {
         "id": "3102810",
-        "html": "<tr align=\"center\" id=\"tr1_3102810\" bgcolor=\"#F0F0F0\" index=\"14\" style=\"height:18px;display:\" odds=\"\"><td><input type=\"checkbox\" class=\"inp\" id=\"chk_3102810\"></td><td bgcolor=\"#442f14\" style=\"color:white;\"><span><a href=\"http://zq.titan007.com/cn/SubLeague.aspx?SclassID=577\" target=\"_blank\" title=\"进入资料库\"><font color=\"white\">洪都甲春</font></a></span></td><td align=\"center\" id=\"mt_3102810\">08:00</td><td align=\"center\" id=\"time_3102810\" class=\"td_status\"></td><td align=\"right\"><span id=\"horder_3102810\"></span><a id=\"yellow1_3102810\"></a><a id=\"redcard1_3102810\"></a><a id=\"team1_3102810\" href=\"javascript:\" onclick=\"showTeamPanlu(3102810)\">锡瓜特佩克独立</a></td><td aloc=\"3102810\" onclick=\"showgoallist(3102810)\" class=\"td_score\" onmouseover=\"showdetail(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td align=\"left\"><a id=\"team2_3102810\" href=\"javascript:\" onclick=\"showTeamPanlu(3102810)\">普拉腾斯科尔特斯港</a><a id=\"redcard2_3102810\"></a><a id=\"yellow2_3102810\"></a><span id=\"gorder_3102810\"></span></td><td class=\"td_half\" aloc=\"3102810\" onmouseover=\"showpaulu(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td><a href=\"javascript:\" onclick=\"analysis(3102810)\" title=\"数据分析\">析</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"AsianOdds(3102810);\" title=\"亚让\">亚</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"TotalOdds(3102810);\" title=\"进球数\">大</a> <a href=\"javascript:EuropeOdds(3102810)\" title=\"胜平负\">欧</a></td><td style=\"text-align:left;\" class=\"icons\"><span></span></td><td><a href=\"javascript:addConcern(3102810,10);\" title=\"添加置顶\"><img src=\"image/unTop.png\"></a></td></tr>"
+        "html": "<tr align=\"center\" id=\"tr1_3102810\" bgcolor=\"#F0F0F0\" index=\"13\" style=\"height:18px;display:\" odds=\"\"><td><input type=\"checkbox\" class=\"inp\" id=\"chk_3102810\"></td><td bgcolor=\"#442f14\" style=\"color:white;\"><span><a href=\"http://zq.titan007.com/cn/SubLeague.aspx?SclassID=577\" target=\"_blank\" title=\"进入资料库\"><font color=\"white\">洪都甲春</font></a></span></td><td align=\"center\" id=\"mt_3102810\">08:00</td><td align=\"center\" id=\"time_3102810\" class=\"td_status\"></td><td align=\"right\"><span id=\"horder_3102810\"></span><a id=\"yellow1_3102810\"></a><a id=\"redcard1_3102810\"></a><a id=\"team1_3102810\" href=\"javascript:\" onclick=\"showTeamPanlu(3102810)\">锡瓜特佩克独立</a></td><td aloc=\"3102810\" onclick=\"showgoallist(3102810)\" class=\"td_score\" onmouseover=\"showdetail(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td align=\"left\"><a id=\"team2_3102810\" href=\"javascript:\" onclick=\"showTeamPanlu(3102810)\">普拉腾斯科尔特斯港</a><a id=\"redcard2_3102810\"></a><a id=\"yellow2_3102810\"></a><span id=\"gorder_3102810\"></span></td><td class=\"td_half\" aloc=\"3102810\" onmouseover=\"showpaulu(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td><a href=\"javascript:\" onclick=\"analysis(3102810)\" title=\"数据分析\">析</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"AsianOdds(3102810);\" title=\"亚让\">亚</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"TotalOdds(3102810);\" title=\"进球数\">大</a> <a href=\"javascript:EuropeOdds(3102810)\" title=\"胜平负\">欧</a></td><td style=\"text-align:left;\" class=\"icons\"><span></span></td><td><a href=\"javascript:addConcern(3102810,10);\" title=\"添加置顶\"><img src=\"image/unTop.png\"></a></td></tr>"
       },
       {
         "id": "3102813",
-        "html": "<tr align=\"center\" id=\"tr1_3102813\" bgcolor=\"#FFFDF3\" index=\"15\" style=\"height:18px;display:\" odds=\"\"><td><input type=\"checkbox\" class=\"inp\" id=\"chk_3102813\"></td><td bgcolor=\"#442f14\" style=\"color:white;\"><span><a href=\"http://zq.titan007.com/cn/SubLeague.aspx?SclassID=577\" target=\"_blank\" title=\"进入资料库\"><font color=\"white\">洪都甲春</font></a></span></td><td align=\"center\" id=\"mt_3102813\">08:00</td><td align=\"center\" id=\"time_3102813\" class=\"td_status\"></td><td align=\"right\"><span id=\"horder_3102813\"></span><a id=\"yellow1_3102813\"></a><a id=\"redcard1_3102813\"></a><a id=\"team1_3102813\" href=\"javascript:\" onclick=\"showTeamPanlu(3102813)\">莫拉松</a></td><td aloc=\"3102813\" onclick=\"showgoallist(3102813)\" class=\"td_score\" onmouseover=\"showdetail(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td align=\"left\"><a id=\"team2_3102813\" href=\"javascript:\" onclick=\"showTeamPanlu(3102813)\">吉恩希斯</a><a id=\"redcard2_3102813\"></a><a id=\"yellow2_3102813\"></a><span id=\"gorder_3102813\"></span></td><td class=\"td_half\" aloc=\"3102813\" onmouseover=\"showpaulu(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td><a href=\"javascript:\" onclick=\"analysis(3102813)\" title=\"数据分析\">析</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"AsianOdds(3102813);\" title=\"亚让\">亚</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"TotalOdds(3102813);\" title=\"进球数\">大</a> <a href=\"javascript:EuropeOdds(3102813)\" title=\"胜平负\">欧</a></td><td style=\"text-align:left;\" class=\"icons\"><span></span></td><td><a href=\"javascript:addConcern(3102813,10);\" title=\"添加置顶\"><img src=\"image/unTop.png\"></a></td></tr>"
+        "html": "<tr align=\"center\" id=\"tr1_3102813\" bgcolor=\"#FFFDF3\" index=\"14\" style=\"height:18px;display:\" odds=\"\"><td><input type=\"checkbox\" class=\"inp\" id=\"chk_3102813\"></td><td bgcolor=\"#442f14\" style=\"color:white;\"><span><a href=\"http://zq.titan007.com/cn/SubLeague.aspx?SclassID=577\" target=\"_blank\" title=\"进入资料库\"><font color=\"white\">洪都甲春</font></a></span></td><td align=\"center\" id=\"mt_3102813\">08:00</td><td align=\"center\" id=\"time_3102813\" class=\"td_status\"></td><td align=\"right\"><span id=\"horder_3102813\"></span><a id=\"yellow1_3102813\"></a><a id=\"redcard1_3102813\"></a><a id=\"team1_3102813\" href=\"javascript:\" onclick=\"showTeamPanlu(3102813)\">莫拉松</a></td><td aloc=\"3102813\" onclick=\"showgoallist(3102813)\" class=\"td_score\" onmouseover=\"showdetail(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td align=\"left\"><a id=\"team2_3102813\" href=\"javascript:\" onclick=\"showTeamPanlu(3102813)\">吉恩希斯</a><a id=\"redcard2_3102813\"></a><a id=\"yellow2_3102813\"></a><span id=\"gorder_3102813\"></span></td><td class=\"td_half\" aloc=\"3102813\" onmouseover=\"showpaulu(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td><a href=\"javascript:\" onclick=\"analysis(3102813)\" title=\"数据分析\">析</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"AsianOdds(3102813);\" title=\"亚让\">亚</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"TotalOdds(3102813);\" title=\"进球数\">大</a> <a href=\"javascript:EuropeOdds(3102813)\" title=\"胜平负\">欧</a></td><td style=\"text-align:left;\" class=\"icons\"><span></span></td><td><a href=\"javascript:addConcern(3102813,10);\" title=\"添加置顶\"><img src=\"image/unTop.png\"></a></td></tr>"
       }
     ],
     "flash_type": "object",
@@ -426,5 +426,5 @@
   "selected_count": 0,
   "message": "Fewer than three scheduled matches have all opening/current Titan odds; AI analysis not run.",
   "telegram": "not_configured",
-  "finished_at": "2026-11-21T00:08:13.812924+00:00"
+  "finished_at": "2026-11-21T00:09:21.966366+00:00"
 }
