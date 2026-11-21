@@ -36,6 +36,9 @@ def safe_issues(data, originals):
         return ["Match count differs from the 3-5 verified source fixtures"]
     ids = set()
     for i, (m, orig) in enumerate(zip(rows, originals), 1):
+        if not isinstance(m, dict) or not isinstance(orig, dict):
+            issues.append("match " + str(i) + ": invalid fixture structure")
+            continue
         p = "match " + str(i) + ": "
         for field in IMMUTABLE:
             if m.get(field) != orig.get(field):
@@ -61,14 +64,15 @@ def safe_issues(data, originals):
         if re.search(r"包中|稳赚|必胜|100%|绝对命中|保本", text, re.I):
             issues.append(p + "unsupported certainty or guaranteed outcome")
         scores = m.get("scores", [])
-        if not isinstance(scores, list) or len(scores) != 3 or len(set(scores)) != 3:
+        if not isinstance(scores, list) or len(scores) != 3 or not all(isinstance(x, str) for x in scores) or len(set(scores)) != 3:
             issues.append(p + "three distinct scorelines required")
         elif any(not isinstance(score, str) or not re.fullmatch(r"\d{1,2}-\d{1,2}", score) for score in scores):
             issues.append(p + "bad scoreline formatting")
         trend = str(m.get("trend", "")).replace(" ", "")
         mtrend = re.fullmatch(r"(大|小)(\d+(?:\.\d+)?)", trend)
         line = orig.get("ou_live")
-        if not mtrend or not isinstance(line, list) or len(line) != 3 or abs(float(mtrend.group(2)) - float(line[1])) > 1e-6:
+        target = line[1] if isinstance(line, list) and len(line) == 3 else None
+        if not mtrend or not isinstance(target, (int, float)) or abs(float(mtrend.group(2)) - float(target)) > 1e-6:
             issues.append(p + "recommendation is not source-linked totals line")
         elif isinstance(scores, list) and len(scores) == 3 and all(isinstance(x, str) and re.fullmatch(r"\d{1,2}-\d{1,2}", x) for x in scores):
             goals = sum(map(int, scores[0].split("-")))
