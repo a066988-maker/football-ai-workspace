@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-21T19:55:00+08:00",
-  "github_run_id": "44900939027",
+  "checked_at": "2026-11-21T20:53:54+08:00",
+  "github_run_id": "44905956729",
   "status": "blocked",
   "checks": {
     "fixture_source": "passed",
@@ -11,7 +11,7 @@
     "poster_and_copy": "pending"
   },
   "errors": [
-    "AI QA: ValueError: Automatic AI review/rewrite failed: Attempt 1: Gemini HTTP 404 (quota, credentials or model issue) | Attempt 2: Gemini HTTP 404 (quota, credentials or model issue) | Attempt 3: Gemini HTTP 404 (quota, credentials or model issue)"
+    "AI QA: ValueError: Automatic AI review/rewrite failed: Attempt 1: Gemini model fallback exhausted: gemini-3.5-flash-lite: HTTP 503; gemini-3.8-flash: HTTP 503"
   ],
   "ai_attempts": 0,
   "repairs": [],
