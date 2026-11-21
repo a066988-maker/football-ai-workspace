@@ -13,6 +13,7 @@ import collect
 import notify
 import quality
 import render
+import rules_analysis
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
@@ -67,6 +68,7 @@ def main():
     errors = []
     repair_log = []
     attempts = 0
+    engine = "gemini"
 
     if report["status"] == "verified_ready_for_ai":
         try:
@@ -94,10 +96,28 @@ def main():
                     raise ValueError("; ".join(failures[:8]))
                 checks["scores_and_language"] = "passed"
             except Exception as exc:
-                errors.append("AI QA: " + type(exc).__name__ + ": " + str(exc)[:900])
-                report["status"] = "ai_quality_failed"
-                report["message"] = "Gemini failed multi-pass review/rewrite; no content published."
+                # Outage recovery: a clearly labeled rule-based market reading,
+                # still backed by the same verified source and deterministic QA.
+                gemini_reason = type(exc).__name__ + ": " + str(exc)[:380]
+                repair_log.append("Gemini unavailable: " + gemini_reason)
                 (OUT / "analysis.json").unlink(missing_ok=True)
+                try:
+                    fallback = rules_analysis.main(source["matches"])
+                    engine = "rules_fallback"
+                    attempts = fallback["attempts"]
+                    checks["gemini_generation"] = "unavailable_fallback_used"
+                    checks["independent_ai_review"] = "not_run_rules_only"
+                    data = json.loads(analyze.OUTPUT.read_text(encoding="utf-8"))
+                    issues = quality.safe_issues(data, source["matches"])
+                    if issues:
+                        raise ValueError("; ".join(issues[:8]))
+                    checks["scores_and_language"] = "passed_rule_based"
+                except Exception as fallback_exc:
+                    errors.append("Gemini failure: " + gemini_reason)
+                    errors.append("Rules fallback failure: " + type(fallback_exc).__name__ + ": " + str(fallback_exc)[:650])
+                    report["status"] = "ai_quality_failed"
+                    report["message"] = "Gemini unavailable and verified fallback also failed."
+                    (OUT / "analysis.json").unlink(missing_ok=True)
 
         if not errors:
             for render_attempt in range(1, 3):
@@ -114,8 +134,13 @@ def main():
                                   (render_attempt, type(exc).__name__, str(exc)[:250]))
             if checks["poster_and_copy"] == "passed":
                 # Fixed after verification, not merely after an AI response.
-                report["status"] = "analysis_ready"
-                report["message"] = "Passed source rules, 2-stage Gemini QA, Simplified copy and 1080x1920 PNG."
+                report["status"] = "analysis_ready" if engine == "gemini" else "analysis_ready_rules"
+                report["analysis_engine"] = engine
+                report["message"] = (
+                    "Gemini self-reviewed analysis, copy and 1080x1920 PNG verified."
+                    if engine == "gemini" else
+                    "Gemini unavailable: rule-based verified odds analysis, copy and 1080x1920 PNG passed deterministic QA (NOT AI)."
+                )
                 report["assets"] = ["poster.png", "xiaohongshu.txt"]
                 repair_log.extend(errors)
                 errors = []  # successful repair is the durable outcome
@@ -134,7 +159,7 @@ def main():
         checks["asian_and_total_odds"] = "blocked"
         errors = [report.get("message", "No eligible verified Titan fixture data")]
 
-    qa_status = "passed" if report["status"] == "analysis_ready" else "blocked"
+    qa_status = "passed" if report["status"] in ("analysis_ready", "analysis_ready_rules") else "blocked"
     qa = quality.report(qa_status, checks, errors, attempts, repairs=repair_log)
     report["quality"] = {
         "status": qa["status"],
