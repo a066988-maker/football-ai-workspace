@@ -163,7 +163,7 @@ def main():
         except (ValueError, KeyError, TypeError, IndexError, json.JSONDecodeError) as exc:
             summary = str(exc)[:350]
             errors.append("Attempt %d: %s" % (attempt, summary))
-            if "HTTP 401" in summary or "HTTP 403" in summary or "HTTP 429" in summary:
+            if any(token in summary for token in ("HTTP 400", "HTTP 401", "HTTP 403", "HTTP 429", "model fallback exhausted")):
                 break
             feedback = summary
     OUTPUT.unlink(missing_ok=True)
