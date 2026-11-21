@@ -51,6 +51,19 @@ class TitanParserTests(unittest.TestCase):
         market["euro_live"] = [1.26, 4.8, 6.7]
         self.assertTrue(collect.usable_odds(market))
 
+    def test_crow_detail_page_market_parsing(self):
+        european = ["", "Crow*", "2.04", "3.40", "3.40", "other"]
+        asian = ["", "Crow*", "", "0.85", "半/一", "0.85", "0.68", "平/半", "1.02"]
+        totals = ["", "Crow*", "", "0.88", "2.5", "0.82", "1.00", "2.5/3", "0.70"]
+        self.assertEqual(collect.detail_market("euro", european), {
+            "euro_live": [2.04, 3.4, 3.4]
+        })
+        self.assertEqual(collect.detail_market("asian", asian)["asian_open"],
+                         [0.85, 0.75, 0.85])
+        self.assertEqual(collect.detail_market("ou", totals)["ou_live"],
+                         [1.0, 2.75, 0.7])
+        self.assertIsNone(collect.detail_market("asian", ["", "Crow*"]))
+
     def test_invalid_fixtures_are_dropped(self):
         self.assertEqual(collect.fixture_rows("var A=[];"), [])
         self.assertEqual(collect.odds_rows("var sData=[];"), {})
