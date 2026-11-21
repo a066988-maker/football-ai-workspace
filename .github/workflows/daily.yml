@@ -8,8 +8,9 @@ on:
       - 'index.html'
       - '.github/workflows/daily.yml'
   schedule:
-    # Taiwan 16:00, 17:00 and 18:00. Later retries are skipped if today's verified analysis exists.
-    - cron: '0 8,9,10 * * *'
+    # Taiwan 16:00, 17:00, 18:00, 19:00, 20:00 and 22:00.
+    # Later rechecks stop after full source + AI + poster QA succeeds.
+    - cron: '0 8,9,10,11,12,14 * * *'
   workflow_dispatch:
 
 permissions:
