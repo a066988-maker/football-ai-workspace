@@ -5,6 +5,7 @@ import re
 import urllib.error
 import urllib.request
 from pathlib import Path
+import gemini_client
 
 ROOT = Path(__file__).resolve().parents[1]
 INPUT = ROOT / "data" / "verified_matches.json"
@@ -52,33 +53,17 @@ def response_text(result):
 
 
 def gemini(matches, feedback=""):
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY repository secret is unavailable")
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
-    if not re.fullmatch(r"gemini-[\w.\-]+", model):
-        raise ValueError("Invalid model")
     instructions = """你是足球数据审核与小红书赛前分析作者。只基于输入的Titan007赛程、欧赔、亚盘、大小球，绝不编造伤停、阵容、交锋、新闻或水位。所有输出必须为简体中文并使用中国大陆常用足球队名，但不要修改输入球队/联赛的客观字段。
 输入盘口数组：[左侧赔率,盘口原始数值,右侧赔率]。亚洲盘口的正负号与主客方向尚未独立验证，因此本次推荐方向仅允许使用大小球（"大 X" 或 "小 X"），X必须等于对应比赛ou_live[1]的真实盘口数值；禁止主胜/客胜/平局作为趋势。预测分数需给三个不同的合理剧本，首选比分的总球数需与推荐大小方向不矛盾。结合盘路变化与已提供的欧赔做谨慎分析，不保证准确。分析每场约70-100个简体汉字。只输出JSON对象，结构：{"picks":[{"id":"比赛id原样字符串","analysis":"一段赛前分析","trend":"大 2.5","scores":["2-1","1-2","1-1"]}]}，逐场按输入顺序对应，不要补充其他键。以下为唯一输入数据：
 """
     if feedback:
         instructions += "\n上轮自动审校检测到以下错误，必须在重写时逐项修复，不得改动任何原始盘线、球队名或开球时间：" + feedback[:1200] + "\n"
-    payload = json.dumps({
-        "contents": [{"parts": [{"text": instructions + json.dumps(matches, ensure_ascii=False)}]}],
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.25}
-    }, ensure_ascii=False).encode("utf-8")
-    url = "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent"
-    req = urllib.request.Request(url, data=payload, method="POST", headers={
-        "Content-Type": "application/json",
-        "x-goog-api-key": api_key,
-    })
-    try:
-        with urllib.request.urlopen(req, timeout=90) as reply:
-            result = json.load(reply)
-    except urllib.error.HTTPError as exc:
-        # Never print API keys or entire provider payloads.
-        raise ValueError("Gemini HTTP %s (quota, credentials or model issue)" % exc.code) from exc
-    return json.loads(response_text(result))
+    parsed, used_model = gemini_client.call(
+        instructions + json.dumps(matches, ensure_ascii=False), temperature=0.25
+    )
+    if not isinstance(parsed, dict):
+        raise ValueError("Gemini returned non-object analysis JSON")
+    return parsed
 
 
 def validate_picks(matches, result):
@@ -118,10 +103,6 @@ def validate_picks(matches, result):
 
 def ai_review(matches, generated):
     """Independent Gemini language/factual-consistency review; never adds odds."""
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("Gemini review requires GEMINI_API_KEY")
-    model = os.environ.get("GEMINI_MODEL", "gemini-2.5-flash")
     instructions = (
         "你是独立的足球事实审校员。只能核对以下【输入盘线数据】与【分析输出】，"
         "没有外部网站访问能力，不得推断伤停、阵容、历史战绩、排名或球队近期表现。"
@@ -133,21 +114,7 @@ def ai_review(matches, generated):
         + json.dumps(matches, ensure_ascii=False)
         + "\n【分析输出】\n" + json.dumps(generated, ensure_ascii=False)
     )
-    payload = json.dumps({
-        "contents": [{"parts": [{"text": instructions}]}],
-        "generationConfig": {"responseMimeType": "application/json", "temperature": 0.0}
-    }, ensure_ascii=False).encode("utf-8")
-    req = urllib.request.Request(
-        "https://generativelanguage.googleapis.com/v1beta/models/" + model + ":generateContent",
-        data=payload, method="POST",
-        headers={"Content-Type": "application/json", "x-goog-api-key": api_key},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=90) as response:
-            result = json.load(response)
-    except urllib.error.HTTPError as exc:
-        raise ValueError("Gemini review HTTP %s (quota, credentials or model issue)" % exc.code) from exc
-    review = json.loads(response_text(result))
+    review, used_model = gemini_client.call(instructions, temperature=0.0)
     if not isinstance(review, dict) or not isinstance(review.get("passed"), bool):
         raise ValueError("Gemini review returned malformed result")
     issues = review.get("issues", [])
@@ -185,7 +152,8 @@ def main():
                 "self_check": {
                     "attempts": attempt,
                     "rule_validation": "passed",
-                    "independent_ai_review": "passed"
+                    "independent_ai_review": "passed",
+                    "model": gemini_client.LAST_WORKING
                 },
             }
             OUTPUT.parent.mkdir(exist_ok=True)
