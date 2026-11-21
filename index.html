@@ -103,12 +103,12 @@ function drawPoster(d){
     drawFit('比分 '+m.scores.join(' / '),76,y+188,910,33,'#dce9f0');
     drawFit('趋势 '+m.trend,76,y+246,910,35,'#ffda88');
   });
-  drawFit('足球赛事前瞻 · 理性交流',70,1758,940,38,'#c2d4e0');
+  drawFit((d.analysis_engine==='rules_fallback'?'盘口规则版（非AI）':'AI赛前分析')+' · 理性交流',70,1758,940,38,'#c2d4e0');
   drawFit('仅供赛事讨论，不构成投注建议',70,1831,940,31,'#91abc0');
 }
 function makeCopy(d){
   const h=d.matches[0].home+'迎战'+d.matches[0].away+'，今晚的盘口值得细看';
-  return h+'\n\n'+d.matches.map((m,i)=>{
+  return h+'\n\n'+(d.analysis_engine==='rules_fallback'?'【盘口规则版·非AI生成】\n\n':'')+d.matches.map((m,i)=>{
     return '【'+(i+1)+'｜'+m.league+'】'+m.home+' vs '+m.away+'\n开球：'+m.kickoff.slice(5,16).replace('T',' ')+'\n'+m.analysis+'\n趋势：'+m.trend+'\n比分：'+m.scores.join(' / ');
   }).join('\n\n')+'\n\n仅供赛事交流，不构成投注建议，请理性判断。\n#足球 #足球分析 #赛事前瞻';
 }
@@ -162,6 +162,7 @@ async function refresh(){
     let message='最近執行：'+(status.updated_at||'未知')+'\n資料狀態：'+status.status+
       '\n指定時段賽事：'+(status.window_fixture_count??'—')+' 場，完整盤口：'+(status.complete_odds_count??'—')+' 場';
     if(status.message)message+='\n'+status.message;
+    if(status.status==='analysis_ready_rules')message+='\n注意：本次是已核實盤口的規則分析，並非 Gemini AI 撰寫。';
     if(!fresh)message+='\n注意：這是前一日期的歷史結果，不能當作今天的推薦。';
     E('daily-state').textContent=message;
     try{
@@ -188,7 +189,7 @@ async function refresh(){
       const rows=(calendar.fixtures||[]).map(m=>m.kickoff.slice(5,16).replace('T',' ')+' '+m.league+'｜'+m.home+' vs '+m.away+(m.has_complete_odds?' ✓':' 盘未齐'));
       E('fixtures-list').textContent='联赛场数：'+(summary||'—')+'\n\n'+(rows.join('\n')||'该时段暂无已取得的赛事');
     }catch(ex){E('fixtures-list').textContent='完整賽程尚未發布：'+ex.message;E('today-slate').textContent='今日賽程暫時讀取失敗'}
-    if(status.status==='analysis_ready' && fresh){
+    if(['analysis_ready','analysis_ready_rules'].includes(status.status) && status.quality?.publish_allowed===true && fresh){
       const data=await readRemote('output/analysis.json');
       if(!data.matches||!data.matches.length)throw Error('分析檔案沒有賽事');
       const cached=JSON.parse(localStorage.getItem(STORE)||'null');
