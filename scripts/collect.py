@@ -140,10 +140,10 @@ def usable_odds(odds):
                 if not all(valid(x, 1.01, 500) for x in data):
                     return False
             elif market == "asian":
-                if not (valid(left) and valid(right) and -7 <= line <= 7):
+                if not (valid(left) and valid(right) and isinstance(line, (int, float)) and -7 <= line <= 7):
                     return False
             else:
-                if not (valid(left) and valid(right) and 0.25 <= line <= 10):
+                if not (valid(left) and valid(right) and isinstance(line, (int, float)) and 0.25 <= line <= 10):
                     return False
     return True
 
