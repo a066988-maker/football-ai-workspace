@@ -1,60 +1,153 @@
-"""Daily unattended job. A source/API failure is published as a failure, never fake picks."""
+"""Unattended collection -> Gemini critique/rewrite -> QA -> render/verify -> publish.
+
+No unverified fixtures or stale/malformed assets are marked publishable.
+Errors leave machine-readable QA details; transient failures retry at next cron.
+"""
 import datetime as dt
 import json
 from pathlib import Path
 
-import collect
 import analyze
+import collect
 import notify
+import quality
 import render
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
 
 
-def main():
-    OUT.mkdir(parents=True, exist_ok=True)
-    # Keep the first verified result for this local calendar day: later hourly
-    # retries cannot overwrite successful analysis with a transient outage.
+def already_complete_today():
     status_path = OUT / "status.json"
     analysis_path = OUT / "analysis.json"
-    if status_path.exists() and analysis_path.exists():
-        try:
-            old = json.loads(status_path.read_text(encoding="utf-8"))
-            today = dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).date().isoformat()
-            if old.get("status") == "analysis_ready" and old.get("window_start", "").startswith(today):
-                print("Verified daily analysis already published; retry skipped.")
-                return
-        except (OSError, ValueError):
-            pass
-    analysis_path.unlink(missing_ok=True)
-    (OUT / "poster.png").unlink(missing_ok=True)
-    (OUT / "xiaohongshu.txt").unlink(missing_ok=True)
+    qa_path = OUT / "qa_report.json"
+    poster = OUT / "poster.png"
+    copy = OUT / "xiaohongshu.txt"
+    if not all(p.is_file() for p in (status_path, analysis_path, qa_path, poster, copy)):
+        return False
+    try:
+        state = json.loads(status_path.read_text(encoding="utf-8"))
+        qa = json.loads(qa_path.read_text(encoding="utf-8"))
+        data = json.loads(analysis_path.read_text(encoding="utf-8"))
+        today = dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).date().isoformat()
+        if state.get("status") != "analysis_ready" or not state.get("window_start", "").startswith(today):
+            return False
+        if qa.get("status") != "passed" or not qa.get("publish_allowed"):
+            return False
+        if data.get("self_check", {}).get("independent_ai_review") != "passed":
+            return False
+        if quality.safe_issues(data, data.get("matches", [])):
+            return False
+        if quality.asset_issues(data, copy, poster):
+            return False
+        return True
+    except (OSError, ValueError, TypeError, KeyError):
+        return False
+
+
+def main():
+    OUT.mkdir(parents=True, exist_ok=True)
+    if already_complete_today():
+        print("Today has already passed all source/AI/assets QA checks. No duplicate delivery.")
+        return
+
+    for filename in ("analysis.json", "poster.png", "xiaohongshu.txt", "qa_report.json"):
+        (OUT / filename).unlink(missing_ok=True)
+
     report = collect.collect()
+    checks = {
+        "fixture_source": "pending",
+        "asian_and_total_odds": "pending",
+        "gemini_generation": "pending",
+        "independent_ai_review": "pending",
+        "scores_and_language": "pending",
+        "poster_and_copy": "pending",
+    }
+    errors = []
+    attempts = 0
+
     if report["status"] == "verified_ready_for_ai":
         try:
-            analyze.main()
-            report["status"] = "analysis_ready"
-            report["message"] = "Titan fixture/odds source validated and Gemini output checked."
+            source = json.loads(analyze.INPUT.read_text(encoding="utf-8"))
+            failures = quality.input_issues(source, report)
+            if failures:
+                raise ValueError("; ".join(failures[:8]))
+            checks["fixture_source"] = "passed"
+            checks["asian_and_total_odds"] = "passed"
+        except (OSError, ValueError, TypeError) as exc:
+            errors.append("Source QA: " + str(exc)[:350])
+            report["status"] = "source_quality_failed"
+            report["message"] = "Source data could not pass fresh fixture/odds validation."
+
+        if not errors:
             try:
-                render.main()
+                ai = analyze.main()  # up to 3 Gemini revision rounds with independent AI review
+                attempts = ai["attempts"]
+                checks["gemini_generation"] = "passed"
+                checks["independent_ai_review"] = ai["ai_review"]
+                data = json.loads(analyze.OUTPUT.read_text(encoding="utf-8"))
+                failures = quality.safe_issues(data, source["matches"])
+                if failures:
+                    raise ValueError("; ".join(failures[:8]))
+                checks["scores_and_language"] = "passed"
+            except Exception as exc:
+                errors.append("AI QA: " + type(exc).__name__ + ": " + str(exc)[:900])
+                report["status"] = "ai_quality_failed"
+                report["message"] = "Gemini failed multi-pass review/rewrite; no content published."
+                (OUT / "analysis.json").unlink(missing_ok=True)
+
+        if not errors:
+            for render_attempt in range(1, 3):
+                try:
+                    render.main()
+                    failures = quality.asset_issues(data, OUT / "xiaohongshu.txt",
+                                                    OUT / "poster.png")
+                    if failures:
+                        raise ValueError("; ".join(failures[:8]))
+                    checks["poster_and_copy"] = "passed"
+                    break
+                except Exception as exc:
+                    errors.append("Render QA attempt %d: %s: %s" %
+                                  (render_attempt, type(exc).__name__, str(exc)[:250]))
+            if checks["poster_and_copy"] == "passed":
+                # Fixed after verification, not merely after an AI response.
+                report["status"] = "analysis_ready"
+                report["message"] = "Passed source rules, 2-stage Gemini QA, Simplified copy and 1080x1920 PNG."
                 report["assets"] = ["poster.png", "xiaohongshu.txt"]
-            except Exception as render_exc:
-                report["render_error"] = type(render_exc).__name__ + ": " + str(render_exc)[:160]
-        except Exception as exc:
-            report["status"] = "ai_error"
-            report["message"] = type(exc).__name__ + ": " + str(exc)[:200]
-            (OUT / "analysis.json").unlink(missing_ok=True)
+                errors = []  # successful repair is the durable outcome
+            else:
+                report["status"] = "asset_quality_failed"
+                report["message"] = "Image/copy failed two regeneration checks; publishing blocked."
+                (OUT / "poster.png").unlink(missing_ok=True)
+                (OUT / "xiaohongshu.txt").unlink(missing_ok=True)
+
+    elif report["status"] == "schedule_only_no_titan_odds":
+        checks["fixture_source"] = "schedule_only"
+        checks["asian_and_total_odds"] = "blocked"
+        errors = ["No validated Titan opening/current odds for this schedule. AI deliberately skipped."]
+    else:
+        checks["fixture_source"] = "unavailable"
+        checks["asian_and_total_odds"] = "blocked"
+        errors = [report.get("message", "No eligible verified Titan fixture data")]
+
+    qa_status = "passed" if report["status"] == "analysis_ready" else "blocked"
+    qa = quality.report(qa_status, checks, errors, attempts)
+    report["quality"] = {
+        "status": qa["status"],
+        "checked_at": qa["checked_at"],
+        "ai_attempts": attempts,
+        "errors": len(qa["errors"]),
+        "publish_allowed": qa["publish_allowed"],
+    }
     report["telegram"] = notify.notify(report["status"])
     report["finished_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
     (OUT / "status.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print("Daily pipeline:", report["status"])
-    print("Fixture count:", report.get("window_fixture_count", 0))
+    print("QA:", qa["status"], "Gemini attempts:", attempts, "errors:", len(errors))
+    print("Window fixtures:", report.get("window_fixture_count", 0))
     print("Verified odds:", report.get("complete_odds_count", 0))
-    # Data unavailable is not a pipeline/programming failure; public status
-    # distinguishes it from an analysis with reliable inputs.
 
 
 if __name__ == "__main__":
