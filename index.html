@@ -29,7 +29,7 @@ details summary{cursor:pointer;font-weight:700}input[type=file]{max-width:240px;
 <div class="panel">
   <h2>每日執行狀態</h2>
   <div id="daily-state" class="small">正在檢查已發布的資料……</div>
-  <button id="refresh">讀取最新資料</button>
+  <button id="refresh">讀取最新資料</button><button id="auto-png" class="secondary">下載自動生成 PNG</button><button id="auto-copy" class="secondary">讀取自動文案</button>
   <details><summary>查看當日賽程與聯賽場數</summary><div id="fixtures-list">尚無賽程資料</div></details>
 </div>
 <div class="panel">
@@ -176,6 +176,21 @@ function download(name,blob){
   setTimeout(()=>URL.revokeObjectURL(url),1500);
 }
 E('refresh').onclick=refresh;E('make').onclick=make;
+E('auto-png').onclick=async()=>{
+  try{
+    const r=await fetch('https://raw.githubusercontent.com/a066988-maker/football-ai-workspace/main/output/poster.png?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw Error('尚無已驗證分析圖片');
+    download('football-daily-poster.png',await r.blob());
+  }catch(ex){note('自動圖片無法下載：'+ex.message)}
+};
+E('auto-copy').onclick=async()=>{
+  try{
+    const r=await fetch('https://raw.githubusercontent.com/a066988-maker/football-ai-workspace/main/output/xiaohongshu.txt?t='+Date.now(),{cache:'no-store'});
+    if(!r.ok)throw Error('尚無已驗證分析文案');
+    E('copy').value=await r.text();
+    note('已讀取自動產出的當日文案，可自行修改後複製。');
+  }catch(ex){note('自動文案無法讀取：'+ex.message)}
+};
 E('check').onclick=()=>{try{const errs=validate(loadJson());note(errs.length?errs.join('\n'):'資料格式正確（不代表已核實網站資料）')}catch(e){note(e.message)}};
 E('file').onchange=async ev=>{const f=ev.target.files?.[0];if(!f)return;E('data').value=await f.text();renderEditors();make()};
 E('sample').onclick=()=>{E('data').value=JSON.stringify({source:'',verified_at:'',matches:[{id:'',league:'',home:'',away:'',kickoff:'',source_url:'',odds_checked_at:'',asian_open:[],asian_live:[],euro_live:[],ou_open:[],ou_live:[],analysis:'',trend:'大 2.5',scores:['2-1','1-2','1-1']}]},null,2);renderEditors()};
