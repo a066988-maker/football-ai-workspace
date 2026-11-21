@@ -38,6 +38,14 @@ jobs:
           if ! command -v google-chrome >/dev/null && ! command -v chromium >/dev/null; then
             python -m playwright install chromium
           fi
+      - name: Ensure Chinese glyph fonts for Xiaohongshu image
+        run: |
+          if ! fc-list :lang=zh family | grep -qiE 'Noto Sans CJK|Noto Sans SC|WenQuanYi'; then
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq fonts-noto-cjk
+          fi
+      - name: Verify local PNG rendering
+        run: python scripts/render.py --selftest
       - name: Collect Titan007 and generate Gemini analysis when verified
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
