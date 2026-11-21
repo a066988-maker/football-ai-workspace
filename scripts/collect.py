@@ -198,6 +198,31 @@ def browser_market_rows(payload):
     return rows
 
 
+
+def detail_market(kind, cells):
+    """Parse actual source company row, never synthesize an opening/current line."""
+    if kind == "euro":
+        if len(cells) < 5:
+            return None
+        values = [number(x) for x in cells[2:5]]
+        return {"euro_live": values} if all(valid(x, 1.01, 500) for x in values) else None
+    if len(cells) < 9:
+        return None
+    line = asian_line if kind == "asian" else total_line
+    opening = [number(cells[3]), line(cells[4]), number(cells[5])]
+    current = [number(cells[6]), line(cells[7]), number(cells[8])]
+    if any(x is None for x in opening + current):
+        return None
+    if kind == "asian":
+        if not (-7 <= opening[1] <= 7 and -7 <= current[1] <= 7):
+            return None
+    elif not (0.25 <= opening[1] <= 10 and 0.25 <= current[1] <= 10):
+        return None
+    if not all(valid(x) for x in (opening[0], opening[2], current[0], current[2])):
+        return None
+    return {kind + "_open": opening, kind + "_live": current}
+
+
 def browser_source():
     """Use the public site's loaded JS if direct feed connections are blocked.
 
@@ -241,9 +266,9 @@ def browser_source():
                         entries: example.oddsList.items.length,
                         first: example.oddsList.items[0]} : null};
             }""")
-            # Read European 1x2 odds from real Crow rows for selected scheduled
-            # fixtures. These are not deduced from Asian/total odds.
-            browse_markets = browser_market_rows(payload.get("flashMarkets", []))
+            # Check up to eight upcoming fixtures against separate match-specific
+            # Titan European, Asian and totals pages. Every visited page must
+            # have the expected home AND away names, or its odds are rejected.
             taipei_today = dt.datetime.now(ZONE).date()
             begin = dt.datetime.combine(taipei_today, dt.time(16), ZONE)
             finish = begin + dt.timedelta(hours=16)
@@ -254,40 +279,54 @@ def browser_source():
                 sid = str(source_row[0])
                 scheduled = stamp(str(source_row[12]))
                 state = int(source_row[13]) if str(source_row[13]).lstrip("-").isdigit() else -99
-                book = browse_markets.get(sid, {})
                 if not (scheduled and begin <= scheduled < finish and state in (-1, 0)):
                     continue
-                if not (book.get("asian_open") and book.get("asian_live")
-                        and book.get("ou_open") and book.get("ou_live")):
+                home = clean(str(source_row[5] or source_row[4]))
+                away = clean(str(source_row[8] or source_row[7]))
+                league = clean(str(source_row[2]))
+                if not (home and away and league):
                     continue
-                if any(x is None for name in ("asian_open", "asian_live", "ou_open", "ou_live")
-                       for x in book[name]):
-                    continue
-                candidates.append({"id": sid, "league": clean(str(source_row[2])),
-                                   "home": clean(str(source_row[5] or source_row[4])),
-                                   "away": clean(str(source_row[8] or source_row[7])),
+                candidates.append({"id": sid, "league": league, "home": home,
+                                   "away": away,
                                    "kickoff": scheduled.isoformat(timespec="minutes")})
             candidates.sort(key=selection_rank)
-            payload["euroOdds"] = {}
+            payload["detailOdds"] = {}
             payload["euro_candidates"] = len(candidates)
-            for match in candidates[:12]:
+            payload["euro_attempted"] = 0
+            for match in candidates[:8]:
                 sid = match["id"]
-                try:
-                    page.goto("https://1x2.titan007.com/Oddslist/" + sid + ".htm",
-                              wait_until="domcontentloaded", timeout=14000)
-                    title = page.title().replace(" ", "")
-                    if match["home"].replace(" ", "") not in title or match["away"].replace(" ", "") not in title:
-                        continue  # Wrong match ID or mismatched odds page; never use it.
-                    row = page.locator("tr").filter(has_text=re.compile("Crow", re.I)).first
-                    cells = [x.strip() for x in row.locator("td").all_text_contents()]
-                    if len(cells) < 5:
+                markets = {}
+                endpoints = (
+                    ("euro", "https://1x2.titan007.com/Oddslist/" + sid + ".htm"),
+                    ("asian", "https://vip.titan007.com/AsianOdds_n.aspx?id=" + sid),
+                    ("ou", "https://vip.titan007.com/OverDown_n.aspx?id=" + sid),
+                )
+                for kind, url in endpoints:
+                    try:
+                        payload["euro_attempted"] += 1
+                        page.goto(url, wait_until="domcontentloaded", timeout=12000)
+                        title = page.title().replace(" ", "")
+                        if (match["home"].replace(" ", "") not in title or
+                                match["away"].replace(" ", "") not in title):
+                            continue
+                        row = page.locator("tr").filter(has_text=re.compile("Crow", re.I)).first
+                        if not row.count():
+                            row = page.locator('tr[id^="oddstr_"]').first
+                        if not row.count():
+                            continue
+                        cells = [v.strip() for v in row.locator("td").all_text_contents()]
+                        parsed = detail_market(kind, cells)
+                        if parsed:
+                            markets.update(parsed)
+                    except Exception:
                         continue
-                    prices = [number(cells[i]) for i in (2, 3, 4)]
-                    if all(valid(x, 1.01, 500) for x in prices):
-                        payload["euroOdds"][sid] = prices
-                except Exception:
-                    continue
-            payload["euro_success"] = len(payload["euroOdds"])
+                if markets:
+                    payload["detailOdds"][sid] = markets
+            payload["euro_success"] = sum(
+                1 for item in payload["detailOdds"].values()
+                if item.get("euro_live") and item.get("asian_open") and item.get("asian_live")
+                and item.get("ou_open") and item.get("ou_live")
+            )
             # Diagnostic: check whether a genuine 1x2 detail page is reachable.
             eid = (payload.get("oddsExample") or {}).get("id")
             if eid and str(eid).isdigit():
@@ -340,9 +379,8 @@ def browser_source():
         odds[match_id] = parsed
     for match_id, market in browser_market_rows(payload.get("flashMarkets", [])).items():
         odds.setdefault(match_id, market)
-    for match_id, euro in payload.get("euroOdds", {}).items():
-        if match_id in odds:
-            odds[match_id]["euro_live"] = euro
+    for match_id, details in payload.get("detailOdds", {}).items():
+        odds.setdefault(match_id, {}).update(details)
     return fixtures, odds, {"title": payload["title"][:100],
                              "browser_rows": len(payload["schedule"]),
                              "browser_market_arrays": len(payload["markets"]),
@@ -354,7 +392,8 @@ def browser_source():
                              "odds_example": payload.get("oddsExample"),
                              "euro_probe": payload.get("euroProbe"),
                              "euro_candidates": payload.get("euro_candidates"),
-                             "euro_success": payload.get("euro_success")}
+                             "euro_success": payload.get("euro_success"),
+                             "detail_pages_requested": payload.get("euro_attempted")}
 
 
 
