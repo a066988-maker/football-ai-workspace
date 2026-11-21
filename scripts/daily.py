@@ -64,6 +64,7 @@ def main():
         "poster_and_copy": "pending",
     }
     errors = []
+    repair_log = []
     attempts = 0
 
     if report["status"] == "verified_ready_for_ai":
@@ -83,6 +84,7 @@ def main():
             try:
                 ai = analyze.main()  # up to 3 Gemini revision rounds with independent AI review
                 attempts = ai["attempts"]
+                repair_log.extend(ai.get("repair_log", []))
                 checks["gemini_generation"] = "passed"
                 checks["independent_ai_review"] = ai["ai_review"]
                 data = json.loads(analyze.OUTPUT.read_text(encoding="utf-8"))
@@ -114,6 +116,7 @@ def main():
                 report["status"] = "analysis_ready"
                 report["message"] = "Passed source rules, 2-stage Gemini QA, Simplified copy and 1080x1920 PNG."
                 report["assets"] = ["poster.png", "xiaohongshu.txt"]
+                repair_log.extend(errors)
                 errors = []  # successful repair is the durable outcome
             else:
                 report["status"] = "asset_quality_failed"
@@ -131,11 +134,12 @@ def main():
         errors = [report.get("message", "No eligible verified Titan fixture data")]
 
     qa_status = "passed" if report["status"] == "analysis_ready" else "blocked"
-    qa = quality.report(qa_status, checks, errors, attempts)
+    qa = quality.report(qa_status, checks, errors, attempts, repairs=repair_log)
     report["quality"] = {
         "status": qa["status"],
         "checked_at": qa["checked_at"],
         "ai_attempts": attempts,
+        "repairs": len(qa["repairs"]),
         "errors": len(qa["errors"]),
         "publish_allowed": qa["publish_allowed"],
     }
