@@ -156,11 +156,12 @@ async function refresh(){
       const qa=await readRemote('output/qa_report.json');
       const stages=Object.entries(qa.checks||{}).map(([name,result])=>'• '+name+'：'+result).join('\n');
       const errs=(qa.errors||[]).slice(0,4).map(x=>'• '+x).join('\n');
+      const repairs=(qa.repairs||[]).slice(0,4).map(x=>'• '+x).join('\n');
       E('qa-state').textContent='自動查錯：'+qa.status+
-        '｜Gemini修正次數：'+(qa.ai_attempts||0)+
+        '｜Gemini生成嘗試：'+(qa.ai_attempts||0)+
         '｜允許發布：'+(qa.publish_allowed?'是':'否')+
         '\n複查時間：'+(qa.checked_at||'未知')+
-        (stages?'\n'+stages:'')+(errs?'\n阻擋原因：\n'+errs:'');
+        (stages?'\n'+stages:'')+(repairs?'\n已修復問題：\n'+repairs:'')+(errs?'\n阻擋原因：\n'+errs:'');
     }catch(ex){E('qa-state').textContent='尚無新版多輪查錯報告：'+ex.message}
     try{
       const calendar=await readRemote('output/fixtures.json');
