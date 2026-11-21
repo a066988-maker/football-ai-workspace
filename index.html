@@ -141,7 +141,7 @@ function renderEditors(){
     item.appendChild(grid);root.appendChild(item);
   });
 }
-async function readRemote(path){const r=await fetch(path+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
+async function readRemote(path){const url='https://raw.githubusercontent.com/a066988-maker/football-ai-workspace/main/'+path+'?v='+Date.now();const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
 async function refresh(){
   E('daily-state').textContent='正在讀取已發布的每日資料……';
   try{
