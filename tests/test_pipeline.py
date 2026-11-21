@@ -33,6 +33,24 @@ class TitanParserTests(unittest.TestCase):
         self.assertEqual(parsed["ou_live"][1], 2.75)
         self.assertFalse(collect.usable_odds({"asian_open": [0.8, 0.5, 1]}))
 
+    def test_browser_football_market_values(self):
+        item = {
+            "ID": "0_0_0_0", "homeOdds_f": "0.85", "letgoal_f": "半/一",
+            "guestOdds_f": "0.85", "homeOdds": "0.68",
+            "letgoal": "平/半", "guestOdds": "1.02",
+            "upOdds_f": "0.88", "totalScore_f": "1.5",
+            "downOdds_f": "0.82", "upOdds": "1.00",
+            "totalScore": "0.5/1", "downOdds": "0.70",
+        }
+        market = collect.browser_market_rows([
+            {"id": "3114415", "items": [item]}
+        ])["3114415"]
+        self.assertEqual(market["asian_open"], [0.85, 0.75, 0.85])
+        self.assertEqual(market["asian_live"], [0.68, 0.25, 1.02])
+        self.assertEqual(market["ou_live"], [1.0, 0.75, 0.7])
+        market["euro_live"] = [1.26, 4.8, 6.7]
+        self.assertTrue(collect.usable_odds(market))
+
     def test_invalid_fixtures_are_dropped(self):
         self.assertEqual(collect.fixture_rows("var A=[];"), [])
         self.assertEqual(collect.odds_rows("var sData=[];"), {})
