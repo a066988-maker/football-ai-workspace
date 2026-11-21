@@ -20,7 +20,7 @@ try:
     existing = json.loads(current.read_text(encoding="utf-8")) if current.exists() else {}
 except (OSError, ValueError):
     existing = {}
-if existing.get("updated_at", "")[:10] != now.date().isoformat() or existing.get("status") == "analysis_ready":
+if not (existing.get("status") == "analysis_ready" and existing.get("window_start", "").startswith(now.date().isoformat())):
     # This job never publishes yesterday's successful analyses as today's result.
     (OUT / "analysis.json").unlink(missing_ok=True)
     (OUT / "poster.png").unlink(missing_ok=True)
