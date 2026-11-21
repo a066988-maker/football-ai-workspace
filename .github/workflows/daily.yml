@@ -53,6 +53,9 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: python scripts/daily.py
+      - name: Publish an explicit preflight failure marker if setup or tests fail
+        if: failure()
+        run: python scripts/preflight_error.py
       - name: Publish outcomes for the phone-friendly dashboard
         if: always()
         run: |
