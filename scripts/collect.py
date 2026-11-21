@@ -464,6 +464,24 @@ def collect():
         window = [m for m in fixtures
                   if start <= dt.datetime.fromisoformat(m["kickoff"]) < end
                   and m["state"] in (-1, 0)]
+        if not window and report.get("collection_method") == "browser_loaded_public_source":
+            # Titan live scoreboard may still show yesterday's slate in the
+            # morning. Do not assign tomorrow's date to old live matches.
+            # Show separately sourced ESPN fixtures until Titan's next slate
+            # appears; do not run AI with ESPN-only schedules.
+            try:
+                alternate, diagnostics = espn_schedule(start, end)
+                if alternate:
+                    fixtures, odds = alternate, {}
+                    window = [m for m in alternate
+                              if start <= dt.datetime.fromisoformat(m["kickoff"]) < end
+                              and m["state"] in (-1, 0)]
+                    report["collection_method"] = "espn_auxiliary_schedule_only"
+                    report["schedule_diagnostics"] = diagnostics
+                    report["source"] = "https://site.api.espn.com/apis/site/v2/sports/soccer/"
+                    report["source_note"] = "ESPN next-slate schedule; Titan currently shows previous slate. No Titan odds asserted."
+            except Exception as alternate_exc:
+                report["schedule_fallback_error"] = type(alternate_exc).__name__ + ": " + str(alternate_exc)[:120]
         window.sort(key=lambda m: (m["kickoff"], m["id"]))
         available = []
         for fixture in window:
