@@ -1,0 +1,150 @@
+{
+  "source": "Titan007 live public football feed",
+  "verified_at": "2026-11-21T22:44:23+08:00",
+  "matches": [
+    {
+      "id": "3003949",
+      "league": "英超",
+      "home": "伯恩茅斯",
+      "away": "诺丁汉森林",
+      "kickoff": "2026-11-21T23:00+08:00",
+      "state": 0,
+      "source_url": "https://zq.titan007.com/analysis/3003949cn.htm",
+      "has_complete_odds": true,
+      "odds_checked_at": "2026-11-21T22:44:23+08:00",
+      "asian_open": [
+        1.05,
+        0.5,
+        0.83
+      ],
+      "asian_live": [
+        1.11,
+        0.5,
+        0.79
+      ],
+      "euro_live": [
+        2.08,
+        3.4,
+        3.75
+      ],
+      "ou_open": [
+        1.03,
+        2.75,
+        0.83
+      ],
+      "ou_live": [
+        1.07,
+        2.5,
+        0.82
+      ]
+    },
+    {
+      "id": "3003950",
+      "league": "英超",
+      "home": "阿斯顿维拉",
+      "away": "桑德兰",
+      "kickoff": "2026-11-21T23:00+08:00",
+      "state": 0,
+      "source_url": "https://zq.titan007.com/analysis/3003950cn.htm",
+      "has_complete_odds": true,
+      "odds_checked_at": "2026-11-21T22:44:23+08:00",
+      "asian_open": [
+        1.01,
+        0.75,
+        0.88
+      ],
+      "asian_live": [
+        0.96,
+        0.75,
+        0.93
+      ],
+      "euro_live": [
+        1.75,
+        3.9,
+        4.65
+      ],
+      "ou_open": [
+        0.96,
+        2.75,
+        0.9
+      ],
+      "ou_live": [
+        0.89,
+        2.75,
+        1.0
+      ]
+    },
+    {
+      "id": "3003952",
+      "league": "英超",
+      "home": "切尔西",
+      "away": "利兹联",
+      "kickoff": "2026-11-21T23:00+08:00",
+      "state": 0,
+      "source_url": "https://zq.titan007.com/analysis/3003952cn.htm",
+      "has_complete_odds": true,
+      "odds_checked_at": "2026-11-21T22:44:23+08:00",
+      "asian_open": [
+        0.83,
+        0.5,
+        1.05
+      ],
+      "asian_live": [
+        0.97,
+        0.5,
+        0.92
+      ],
+      "euro_live": [
+        1.97,
+        3.55,
+        3.95
+      ],
+      "ou_open": [
+        0.99,
+        2.75,
+        0.87
+      ],
+      "ou_live": [
+        0.85,
+        2.5,
+        1.04
+      ]
+    },
+    {
+      "id": "3003953",
+      "league": "英超",
+      "home": "考文垂",
+      "away": "水晶宫",
+      "kickoff": "2026-11-21T23:00+08:00",
+      "state": 0,
+      "source_url": "https://zq.titan007.com/analysis/3003953cn.htm",
+      "has_complete_odds": true,
+      "odds_checked_at": "2026-11-21T22:44:23+08:00",
+      "asian_open": [
+        0.82,
+        0,
+        1.07
+      ],
+      "asian_live": [
+        0.83,
+        0,
+        1.06
+      ],
+      "euro_live": [
+        2.47,
+        3.55,
+        2.8
+      ],
+      "ou_open": [
+        0.95,
+        2.75,
+        0.91
+      ],
+      "ou_live": [
+        0.87,
+        2.75,
+        1.02
+      ]
+    }
+  ]
+}

@@ -1,19 +1,19 @@
 {
-  "checked_at": "2026-11-21T20:53:54+08:00",
-  "github_run_id": "44905956729",
-  "status": "blocked",
+  "checked_at": "2026-11-21T22:45:18+08:00",
+  "github_run_id": "44915401984",
+  "status": "passed",
   "checks": {
     "fixture_source": "passed",
     "asian_and_total_odds": "passed",
-    "gemini_generation": "pending",
-    "independent_ai_review": "pending",
-    "scores_and_language": "pending",
-    "poster_and_copy": "pending"
+    "gemini_generation": "unavailable_fallback_used",
+    "independent_ai_review": "not_run_rules_only",
+    "scores_and_language": "passed_rule_based",
+    "poster_and_copy": "passed"
   },
-  "errors": [
-    "AI QA: ValueError: Automatic AI review/rewrite failed: Attempt 1: Gemini model fallback exhausted: gemini-3.5-flash-lite: HTTP 503; gemini-3.8-flash: HTTP 503"
-  ],
+  "errors": [],
   "ai_attempts": 0,
-  "repairs": [],
-  "publish_allowed": false
+  "repairs": [
+    "Gemini unavailable: ValueError: Automatic AI review/rewrite failed: Attempt 1: Gemini model fallback exhausted: gemini-3.5-flash-lite: HTTP 503; gemini-3.8-flash: HTTP 503; interactions: HTTP 503"
+  ],
+  "publish_allowed": true
 }
