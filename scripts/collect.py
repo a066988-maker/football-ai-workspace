@@ -155,6 +155,49 @@ def selection_rank(m):
 
 
 
+
+ASIAN_LINES = {
+    "平手": 0, "平/半": 0.25, "半球": 0.5, "半/一": 0.75,
+    "一球": 1, "一/球半": 1.25, "球半": 1.5, "球半/两": 1.75,
+    "两球": 2, "两/两球半": 2.25, "两球半": 2.5,
+    "两球半/三": 2.75, "三球": 3,
+}
+
+
+def asian_line(raw):
+    value = str(raw or "").strip()
+    negative = value.startswith("*")
+    line = ASIAN_LINES.get(value.lstrip("*").strip())
+    return -line if negative and line is not None else line
+
+
+def total_line(raw):
+    values = [number(v) for v in str(raw or "").split("/")]
+    if not values or any(v is None for v in values):
+        return None
+    return sum(values) / len(values)
+
+
+def browser_market_rows(payload):
+    """Use explicitly displayed Chinese goal lines, never assume implied scores."""
+    rows = {}
+    for group in payload:
+        mid = str(group.get("id", ""))
+        entries = group.get("items") or []
+        if not re.fullmatch(r"\d{5,10}", mid) or not entries:
+            continue
+        pre = next((e for e in reversed(entries) if not str(e.get("ID", "")).startswith("3_")), entries[0])
+        rows[mid] = {
+            "asian_open": [number(pre.get("homeOdds_f")), asian_line(pre.get("letgoal_f")), number(pre.get("guestOdds_f"))],
+            "asian_live": [number(pre.get("homeOdds")), asian_line(pre.get("letgoal")), number(pre.get("guestOdds"))],
+            "ou_open": [number(pre.get("upOdds_f")), total_line(pre.get("totalScore_f")), number(pre.get("downOdds_f"))],
+            "ou_live": [number(pre.get("upOdds")), total_line(pre.get("totalScore")), number(pre.get("downOdds"))],
+            # European odds require a separate live 1x2 detail source.
+            "euro_open": None, "euro_live": None,
+        }
+    return rows
+
+
 def browser_source():
     """Use the public site's loaded JS if direct feed connections are blocked.
 
@@ -188,6 +231,7 @@ def browser_source():
                 const oddsGroups = window.flashData?.bfOddsList?.items || [];
                 const example = oddsGroups.find(g => g?.oddsList?.items?.length);
                 return {schedule, markets, title: document.title,
+                    flashMarkets: oddsGroups.map(g => ({id: g.sId, items: (g.oddsList?.items || []).slice(-8)})),
                     sample: schedule.filter(Array.isArray).slice(0, 2).map(r => r.slice(0, 20)),
                     pendingSample: schedule.filter(Array.isArray).filter(r => Number(r[13]) <= 0).slice(0, 8).map(r => ({length:r.length, fields:r.slice(0,32)})),
                     pendingDom: schedule.filter(Array.isArray).filter(r=>Number(r[13])<=0).slice(0,2).map(r=>({id:r[0],html:document.getElementById("tr1_"+r[0])?.outerHTML.slice(0,2500)||""})),
@@ -247,6 +291,8 @@ def browser_source():
             parsed[name + "_open"] = nums[:3]
             parsed[name + "_live"] = nums[3:6]
         odds[match_id] = parsed
+    for match_id, market in browser_market_rows(payload.get("flashMarkets", [])).items():
+        odds.setdefault(match_id, market)
     return fixtures, odds, {"title": payload["title"][:100],
                              "browser_rows": len(payload["schedule"]),
                              "browser_market_arrays": len(payload["markets"]),
