@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-21T07:58:55+08:00",
+  "updated_at": "2026-11-21T08:00:33+08:00",
   "status": "insufficient_verified_odds",
   "window_start": "2026-11-21T16:00+08:00",
   "window_end": "2026-11-22T08:00+08:00",
@@ -9,8 +9,81 @@
   "collection_method": "browser_loaded_public_source",
   "browser_diagnostics": {
     "title": "足球比分_足球直播_足球比分直播-新球体育-球探体育",
-    "browser_rows": 511,
-    "browser_market_arrays": 0
+    "browser_rows": 547,
+    "browser_market_arrays": 0,
+    "schedule_sample": [
+      [
+        "3114925",
+        "#FFBA78",
+        "墨西丙",
+        "墨西丙",
+        "",
+        "勒丘扎斯",
+        "勒丘紮斯",
+        "",
+        "贾奎斯II队",
+        "基亞帕斯II隊",
+        "",
+        "06:00",
+        "2026,10,21,07,12,20",
+        "3",
+        "2",
+        "0",
+        "1",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "3114927",
+        "#FFBA78",
+        "墨西丙",
+        "墨西丙",
+        "",
+        "东方守护者FC",
+        "東方守護者FC",
+        "",
+        "埃卡泰佩克FC",
+        "埃卡泰佩克FC",
+        "",
+        "06:00",
+        "2026,10,21,07,18,40",
+        "3",
+        "3",
+        "2",
+        "1",
+        "1",
+        "0",
+        "0"
+      ]
+    ],
+    "flash_type": "object",
+    "odds_group_count": 302,
+    "odds_example": {
+      "id": "3114415",
+      "entries": 3,
+      "first": {
+        "ID": "3_0_0_3",
+        "stateInfo": "<span class=\"red\">74</span>",
+        "homeScore": 0,
+        "guestScore": 0,
+        "showScore": "0:0",
+        "oddsID_h": "81638359",
+        "homeOdds_f": "0.85",
+        "letgoal_f": "半/一",
+        "guestOdds_f": "0.85",
+        "homeOdds": "0.68",
+        "letgoal": "平/半",
+        "guestOdds": "1.02",
+        "oddsID_t": "81638360",
+        "upOdds_f": "0.88",
+        "totalScore_f": "1.5",
+        "downOdds_f": "0.82",
+        "upOdds": "1.00",
+        "totalScore": "0.5/1",
+        "downOdds": "0.70"
+      }
+    }
   },
   "feed_fixture_count": 0,
   "feed_market_count": 0,
@@ -18,5 +91,6 @@
   "complete_odds_count": 0,
   "selected_count": 0,
   "message": "Fewer than three scheduled matches have all opening/current Titan odds; AI analysis not run.",
-  "finished_at": "2026-11-20T23:59:06.588061+00:00"
+  "telegram": "not_configured",
+  "finished_at": "2026-11-21T00:00:51.700990+00:00"
 }
