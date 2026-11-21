@@ -8,8 +8,8 @@ on:
       - 'index.html'
       - '.github/workflows/daily.yml'
   schedule:
-    # 08:00 UTC = 16:00 Asia/Taipei; public cron may start a little late.
-    - cron: '0 8 * * *'
+    # Taiwan 16:00, 17:00 and 18:00. Later retries are skipped if today's verified analysis exists.
+    - cron: '0 8,9,10 * * *'
   workflow_dispatch:
 
 permissions:
@@ -40,7 +40,7 @@ jobs:
           fi
       - name: Collect Titan007 and generate Gemini analysis when verified
         env:
-          GEMINI_API_KEY: \${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GEMINI_MODEL: gemini-2.5-flash
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
