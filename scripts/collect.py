@@ -190,6 +190,7 @@ def browser_source():
                 return {schedule, markets, title: document.title,
                     sample: schedule.filter(Array.isArray).slice(0, 2).map(r => r.slice(0, 20)),
                     pendingSample: schedule.filter(Array.isArray).filter(r => Number(r[13]) <= 0).slice(0, 8).map(r => ({length:r.length, fields:r.slice(0,32)})),
+                    pendingDom: schedule.filter(Array.isArray).filter(r=>Number(r[13])<=0).slice(0,2).map(r=>({id:r[0],html:document.getElementById("tr1_"+r[0])?.outerHTML.slice(0,2500)||""})),
                     flashType: typeof window.flashData,
                     oddsGroupCount: oddsGroups.length,
                     oddsExample: example ? {id: example.sId,
@@ -238,6 +239,7 @@ def browser_source():
                              "browser_market_arrays": len(payload["markets"]),
                              "schedule_sample": payload.get("sample", []),
                              "pending_sample": payload.get("pendingSample", []),
+                             "pending_dom": payload.get("pendingDom", []),
                              "flash_type": payload.get("flashType"),
                              "odds_group_count": payload.get("oddsGroupCount"),
                              "odds_example": payload.get("oddsExample")}
