@@ -5,6 +5,7 @@ AI can revise its own text, but cannot modify verified source fields.
 """
 import datetime as dt
 import json
+import os
 import re
 import struct
 from pathlib import Path
@@ -157,6 +158,7 @@ def report(status, checks, errors, attempts=0, repairs=None):
     OUT.mkdir(parents=True, exist_ok=True)
     payload = {
         "checked_at": dt.datetime.now(ZONE).isoformat(timespec="seconds"),
+        "github_run_id": os.environ.get("GITHUB_RUN_ID", ""),
         "status": status,
         "checks": checks,
         "errors": errors[:30],
