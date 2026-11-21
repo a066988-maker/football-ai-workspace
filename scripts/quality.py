@@ -153,7 +153,7 @@ def asset_issues(data, post_path, png_path):
     return issues
 
 
-def report(status, checks, errors, attempts=0):
+def report(status, checks, errors, attempts=0, repairs=None):
     OUT.mkdir(parents=True, exist_ok=True)
     payload = {
         "checked_at": dt.datetime.now(ZONE).isoformat(timespec="seconds"),
@@ -161,6 +161,7 @@ def report(status, checks, errors, attempts=0):
         "checks": checks,
         "errors": errors[:30],
         "ai_attempts": attempts,
+        "repairs": (repairs or [])[:12],
         "publish_allowed": status == "passed" and not errors,
     }
     (OUT / "qa_report.json").write_text(
