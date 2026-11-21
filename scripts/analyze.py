@@ -191,7 +191,7 @@ def main():
             OUTPUT.parent.mkdir(exist_ok=True)
             OUTPUT.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
             print("Analysis double-checked and approved after", attempt, "attempt(s)")
-            return {"attempts": attempt, "ai_review": "passed"}
+            return {"attempts": attempt, "ai_review": "passed", "repair_log": errors}
         except (ValueError, KeyError, TypeError, IndexError, json.JSONDecodeError) as exc:
             summary = str(exc)[:350]
             errors.append("Attempt %d: %s" % (attempt, summary))
