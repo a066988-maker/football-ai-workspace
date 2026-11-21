@@ -5,6 +5,7 @@ Errors leave machine-readable QA details; transient failures retry at next cron.
 """
 import datetime as dt
 import json
+import os
 from pathlib import Path
 
 import analyze
@@ -143,6 +144,7 @@ def main():
         "errors": len(qa["errors"]),
         "publish_allowed": qa["publish_allowed"],
     }
+    report["github_run_id"] = os.environ.get("GITHUB_RUN_ID", "")
     report["telegram"] = notify.notify(report["status"])
     report["finished_at"] = dt.datetime.now(dt.timezone.utc).isoformat()
     (OUT / "status.json").write_text(
