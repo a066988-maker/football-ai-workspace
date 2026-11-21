@@ -68,4 +68,41 @@ def call(prompt, temperature=0.2):
         except (OSError, TimeoutError) as exc:
             failures.append(model + ": network error " + type(exc).__name__)
             continue
+    # Gemini 3.8 primarily supports the Interactions API. When generateContent
+    # returns 503, try this separate endpoint once before a rules fallback.
+    interaction_payload = json.dumps({
+        "model": "gemini-3.8-flash",
+        "store": False,
+        "input": [{"type": "user_input", "content": prompt}],
+    }, ensure_ascii=False).encode("utf-8")
+    request = urllib.request.Request(
+        "https://generativelanguage.googleapis.com/v1beta/interactions",
+        data=interaction_payload, method="POST",
+        headers={"Content-Type": "application/json", "x-goog-api-key": key},
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=65) as response:
+            data = json.load(response)
+        outputs = []
+        for step in data.get("steps", []):
+            if step.get("type") != "model_output":
+                continue
+            for part in step.get("content", []):
+                if part.get("type") == "text":
+                    outputs.append(part.get("text", ""))
+        content = "".join(outputs) or data.get("output_text", "")
+        if not content:
+            raise ValueError("Interactions produced no model text")
+        content = content.strip()
+        fence = chr(96) * 3
+        if content.startswith(fence):
+            content = content.removeprefix(fence + "json").removeprefix(fence)
+            content = content.rsplit(fence, 1)[0].strip()
+        parsed = json.loads(content)
+        LAST_WORKING = "gemini-3.8-flash-interactions"
+        return parsed, LAST_WORKING
+    except urllib.error.HTTPError as exc:
+        failures.append("interactions: HTTP " + str(exc.code))
+    except (OSError, TimeoutError, ValueError, json.JSONDecodeError) as exc:
+        failures.append("interactions: " + type(exc).__name__)
     raise ValueError("Gemini model fallback exhausted: " + "; ".join(failures))
