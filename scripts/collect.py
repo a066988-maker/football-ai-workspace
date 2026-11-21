@@ -174,7 +174,11 @@ def browser_source():
             page.goto("https://live.titan007.com/", wait_until="domcontentloaded", timeout=35000)
             page.wait_for_function("Array.isArray(window.A) && window.A.length > 2",
                                    timeout=25000)
-            page.wait_for_timeout(1500)
+            try:
+                page.evaluate("() => { if (typeof window.loadBfOdds === 'function') window.loadBfOdds(); }")
+            except Exception:
+                pass
+            page.wait_for_timeout(2500)
             payload = page.evaluate("""() => {
                 const schedule = Array.isArray(window.A) ? window.A.slice(1) : [];
                 const markets = (typeof window.sData === 'object' && window.sData)
