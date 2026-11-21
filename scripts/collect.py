@@ -342,6 +342,8 @@ def collect():
                 fixtures, odds, diagnostics = browser_source()
                 report["collection_method"] = "browser_loaded_public_source"
                 report["browser_diagnostics"] = diagnostics
+                if not fixtures:
+                    raise ValueError("Browser returned no fixtures with independently usable kickoff dates")
             except Exception as browser_exc:
                 report["browser_error"] = type(browser_exc).__name__ + ": " + str(browser_exc)[:160]
                 fixtures, diagnostics = espn_schedule(start, end)
