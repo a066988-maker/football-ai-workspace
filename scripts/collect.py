@@ -189,6 +189,7 @@ def browser_source():
                 const example = oddsGroups.find(g => g?.oddsList?.items?.length);
                 return {schedule, markets, title: document.title,
                     sample: schedule.filter(Array.isArray).slice(0, 2).map(r => r.slice(0, 20)),
+                    pendingSample: schedule.filter(Array.isArray).filter(r => Number(r[13]) <= 0).slice(0, 8).map(r => ({length:r.length, fields:r.slice(0,32)})),
                     flashType: typeof window.flashData,
                     oddsGroupCount: oddsGroups.length,
                     oddsExample: example ? {id: example.sId,
@@ -236,6 +237,7 @@ def browser_source():
                              "browser_rows": len(payload["schedule"]),
                              "browser_market_arrays": len(payload["markets"]),
                              "schedule_sample": payload.get("sample", []),
+                             "pending_sample": payload.get("pendingSample", []),
                              "flash_type": payload.get("flashType"),
                              "odds_group_count": payload.get("oddsGroupCount"),
                              "odds_example": payload.get("oddsExample")}
