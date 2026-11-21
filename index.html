@@ -91,7 +91,7 @@ function drawPoster(d){
   ctx.fillStyle='#0c1525';ctx.fillRect(0,0,1080,1920);
   ctx.fillStyle='#67e8b4';ctx.fillRect(52,54,6,120);
   drawFit(d.matches[0].kickoff.slice(0,10).replace(/-/g,'/'),82,103,870,40,'#72e6c1');
-  const title=d.matches[0].home+'压阵，'+d.matches[0].away+'来袭';
+  const title=d.matches[0].home+'坐镇，'+d.matches[0].away+'来袭';
   drawFit(title,70,171,940,56,'#f5fafc');
   const top=225,step=1450/n;
   d.matches.forEach((m,i)=>{
