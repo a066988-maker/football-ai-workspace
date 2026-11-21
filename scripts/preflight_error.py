@@ -3,6 +3,7 @@ import datetime as dt
 import json
 from pathlib import Path
 from zoneinfo import ZoneInfo
+import quality
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
@@ -26,4 +27,5 @@ if not (existing.get("status") == "analysis_ready" and existing.get("window_star
     (OUT / "poster.png").unlink(missing_ok=True)
     (OUT / "xiaohongshu.txt").unlink(missing_ok=True)
     current.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+    quality.report("blocked", {"pipeline_preflight": "failed"}, [data["message"]])
 print("Preflight error marker evaluated.")
