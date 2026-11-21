@@ -18,7 +18,8 @@ def post_text(data):
         raise ValueError("Poster requires three to five verified analyzed fixtures")
     first = matches[0]
     title = first["home"] + "坐镇，" + first["away"] + "迎战：盘路暗藏哪些变化？"
-    lines = [title, "", "先看盘口变化，再谈比赛剧本。临场水位随时可能调整，以下仅作赛前交流。", ""]
+    method = "【盘口规则分析·非AI生成】" if data.get("analysis_engine") == "rules_fallback" else "【Gemini AI分析·已复查】"
+    lines = [title, "", method, "先看盘口变化，再谈比赛剧本。临场水位随时可能调整，以下仅作赛前交流。", ""]
     for i, match in enumerate(matches, 1):
         lines.extend([
             "【%d｜%s】%s vs %s" % (i, match["league"], match["home"], match["away"]),
@@ -54,6 +55,7 @@ CANVAS_SCRIPT = r"""
   const first = data.matches[0];
   drawFit(first.kickoff.slice(0,10).replace(/-/g,'/'),82,107,900,40,'#68e4b4');
   drawFit(first.home+'坐镇，'+first.away+'迎战',68,179,940,58,'#f3f9fa');
+  const method = data.analysis_engine === 'rules_fallback' ? '盘口规则版 · 非AI生成' : 'AI分析 · 已复查';
   const n=data.matches.length, start=229, per=1440/n;
   data.matches.forEach((m,i) => {
     const y=start+i*per;
@@ -66,7 +68,7 @@ CANVAS_SCRIPT = r"""
     drawFit('比分 '+m.scores.join(' / '),73,y+189,906,35,'#dbe7f3');
     drawFit('趋势 '+m.trend,73,y+243,900,37,'#fbd18b');
   });
-  drawFit('赛前盘口观察 · 理性交流',65,1765,930,37,'#c2d4e0');
+  drawFit(method+' · 理性交流',65,1765,930,37,'#c2d4e0');
   drawFit('仅供赛事交流，不构成投注建议',65,1842,930,31,'#91abc0');
 }
 """
