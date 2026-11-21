@@ -264,6 +264,8 @@ def browser_source():
                        for x in book[name]):
                     continue
                 candidates.append({"id": sid, "league": clean(str(source_row[2])),
+                                   "home": clean(str(source_row[5] or source_row[4])),
+                                   "away": clean(str(source_row[8] or source_row[7])),
                                    "kickoff": scheduled.isoformat(timespec="minutes")})
             candidates.sort(key=selection_rank)
             payload["euroOdds"] = {}
@@ -273,6 +275,9 @@ def browser_source():
                 try:
                     page.goto("https://1x2.titan007.com/Oddslist/" + sid + ".htm",
                               wait_until="domcontentloaded", timeout=14000)
+                    title = page.title().replace(" ", "")
+                    if match["home"].replace(" ", "") not in title or match["away"].replace(" ", "") not in title:
+                        continue  # Wrong match ID or mismatched odds page; never use it.
                     row = page.locator("tr").filter(has_text=re.compile("Crow", re.I)).first
                     cells = [x.strip() for x in row.locator("td").all_text_contents()]
                     if len(cells) < 5:
