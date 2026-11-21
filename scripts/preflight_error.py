@@ -1,6 +1,7 @@
 """Persist preflight/setup failures so the Pages dashboard never claims fresh success."""
 import datetime as dt
 import json
+import os
 from pathlib import Path
 from zoneinfo import ZoneInfo
 import quality
@@ -11,6 +12,7 @@ OUT.mkdir(parents=True, exist_ok=True)
 now = dt.datetime.now(ZoneInfo("Asia/Taipei"))
 data = {
     "status": "pipeline_preflight_error",
+    "github_run_id": os.environ.get("GITHUB_RUN_ID", ""),
     "updated_at": now.isoformat(timespec="seconds"),
     "window_start": now.replace(hour=16, minute=0, second=0, microsecond=0).isoformat(timespec="minutes"),
     "message": "Daily GitHub Actions dependencies, tests or image-render self-check failed. Review job logs.",
