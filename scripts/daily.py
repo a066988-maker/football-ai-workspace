@@ -13,7 +13,20 @@ OUT = ROOT / "output"
 
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "analysis.json").unlink(missing_ok=True)
+    # Keep the first verified result for this local calendar day: later hourly
+    # retries cannot overwrite successful analysis with a transient outage.
+    status_path = OUT / "status.json"
+    analysis_path = OUT / "analysis.json"
+    if status_path.exists() and analysis_path.exists():
+        try:
+            old = json.loads(status_path.read_text(encoding="utf-8"))
+            today = dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).date().isoformat()
+            if old.get("status") == "analysis_ready" and old.get("window_start", "").startswith(today):
+                print("Verified daily analysis already published; retry skipped.")
+                return
+        except (OSError, ValueError):
+            pass
+    analysis_path.unlink(missing_ok=True)
     report = collect.collect()
     if report["status"] == "verified_ready_for_ai":
         try:
