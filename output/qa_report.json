@@ -1,17 +1,17 @@
 {
-  "checked_at": "2026-11-21T19:30:20+08:00",
-  "github_run_id": "44899258891",
+  "checked_at": "2026-11-21T19:55:00+08:00",
+  "github_run_id": "44900939027",
   "status": "blocked",
   "checks": {
-    "fixture_source": "unavailable",
-    "asian_and_total_odds": "blocked",
+    "fixture_source": "passed",
+    "asian_and_total_odds": "passed",
     "gemini_generation": "pending",
     "independent_ai_review": "pending",
     "scores_and_language": "pending",
     "poster_and_copy": "pending"
   },
   "errors": [
-    "TypeError: '<=' not supported between instances of 'int' and 'NoneType'"
+    "AI QA: ValueError: Automatic AI review/rewrite failed: Attempt 1: Gemini HTTP 404 (quota, credentials or model issue) | Attempt 2: Gemini HTTP 404 (quota, credentials or model issue) | Attempt 3: Gemini HTTP 404 (quota, credentials or model issue)"
   ],
   "ai_attempts": 0,
   "repairs": [],
