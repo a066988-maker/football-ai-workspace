@@ -64,6 +64,19 @@ class TitanParserTests(unittest.TestCase):
                          [1.0, 2.75, 0.7])
         self.assertIsNone(collect.detail_market("asian", ["", "Crow*"]))
 
+    def test_missing_asian_or_total_line_is_rejected_without_crashing(self):
+        market = {
+            "asian_open": [0.85, None, 0.9],
+            "asian_live": [0.9, 0.5, 0.95],
+            "euro_live": [2.1, 3.2, 3.4],
+            "ou_open": [0.9, 2.5, 0.95],
+            "ou_live": [0.88, 2.75, 0.9],
+        }
+        self.assertFalse(collect.usable_odds(market))
+        market["asian_open"] = [0.85, 0.5, 0.9]
+        market["ou_live"] = [0.88, None, 0.9]
+        self.assertFalse(collect.usable_odds(market))
+
     def test_invalid_fixtures_are_dropped(self):
         self.assertEqual(collect.fixture_rows("var A=[];"), [])
         self.assertEqual(collect.odds_rows("var sData=[];"), {})
