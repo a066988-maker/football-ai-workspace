@@ -17,7 +17,7 @@ def post_text(data):
     if not 3 <= len(matches) <= 5:
         raise ValueError("Poster requires three to five verified analyzed fixtures")
     first = matches[0]
-    title = first["home"] + "出征，" + first["away"] + "迎战：盘路暗藏哪些变化？"
+    title = first["home"] + "坐镇，" + first["away"] + "迎战：盘路暗藏哪些变化？"
     lines = [title, "", "先看盘口变化，再谈比赛剧本。临场水位随时可能调整，以下仅作赛前交流。", ""]
     for i, match in enumerate(matches, 1):
         lines.extend([
@@ -53,7 +53,7 @@ CANVAS_SCRIPT = r"""
   ctx.fillRect(50, 55, 6, 126);
   const first = data.matches[0];
   drawFit(first.kickoff.slice(0,10).replace(/-/g,'/'),82,107,900,40,'#68e4b4');
-  drawFit(first.home+'出征，'+first.away+'迎战',68,179,940,58,'#f3f9fa');
+  drawFit(first.home+'坐镇，'+first.away+'迎战',68,179,940,58,'#f3f9fa');
   const n=data.matches.length, start=229, per=1440/n;
   data.matches.forEach((m,i) => {
     const y=start+i*per;
