@@ -52,10 +52,10 @@ def notify(status):
     chat_id = os.environ.get("TELEGRAM_CHAT_ID", "").strip()
     if not token or not chat_id:
         return "not_configured"
-    if status != "analysis_ready":
+    if status not in ("analysis_ready", "analysis_ready_rules"):
         return "no_verified_analysis_to_send"
     data = json.loads((OUTPUT / "analysis.json").read_text(encoding="utf-8"))
-    lines = ["今日足球前瞻（已核实球探盘线）"]
+    lines = ["今日足球前瞻（球探盘口已核实；规则版非AI生成）" if status == "analysis_ready_rules" else "今日足球前瞻（Gemini AI分析已复审）"]
     for i, match in enumerate(data["matches"], 1):
         lines.append(str(i) + ". " + match["league"] + "｜" + match["home"] + " vs " + match["away"])
         lines.append("趋势：" + match["trend"] + "｜比分：" + " / ".join(match["scores"]))
