@@ -102,5 +102,31 @@ def main():
     print("Produced verified-analysis Xiaohongshu copy and PNG (1080x1920).")
 
 
+def selftest():
+    """Render dummy test-only matches; never publish sample matches as predictions."""
+    import struct
+    import tempfile
+    fixture = {
+        "league": "测试联赛", "home": "甲队", "away": "乙队",
+        "kickoff": "2026-11-21T20:30+08:00",
+        "scores": ["2-1", "1-0", "2-0"], "trend": "大 2.5",
+        "analysis": "仅用于排版测试的虚构文字，不能用于赛事推荐。",
+    }
+    with tempfile.TemporaryDirectory() as temp:
+        path = Path(temp) / "test-poster.png"
+        render_png({"matches": [fixture] * 3}, path)
+        raw = path.read_bytes()
+        if raw[:8] != b"\x89PNG\r\n\x1a\n":
+            raise RuntimeError("PNG generation failed")
+        dimensions = struct.unpack(">II", raw[16:24])
+        if dimensions != (1080, 1920):
+            raise RuntimeError("PNG dimensions incorrect: " + str(dimensions))
+        print("Render browser selftest:", dimensions)
+
+
 if __name__ == "__main__":
-    main()
+    import sys
+    if "--selftest" in sys.argv:
+        selftest()
+    else:
+        main()
