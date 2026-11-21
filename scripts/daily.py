@@ -32,11 +32,13 @@ def already_complete_today():
         qa = json.loads(qa_path.read_text(encoding="utf-8"))
         data = json.loads(analysis_path.read_text(encoding="utf-8"))
         today = dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).date().isoformat()
-        if state.get("status") != "analysis_ready" or not state.get("window_start", "").startswith(today):
+        if state.get("status") not in ("analysis_ready", "analysis_ready_rules") or not state.get("window_start", "").startswith(today):
             return False
         if qa.get("status") != "passed" or not qa.get("publish_allowed"):
             return False
-        if data.get("self_check", {}).get("independent_ai_review") != "passed":
+        if state["status"] == "analysis_ready" and data.get("self_check", {}).get("independent_ai_review") != "passed":
+            return False
+        if state["status"] == "analysis_ready_rules" and data.get("analysis_engine") != "rules_fallback":
             return False
         if quality.safe_issues(data, data.get("matches", [])):
             return False
