@@ -11,6 +11,7 @@ on:
     # Taiwan 16:00, 17:00, 18:00, 19:00, 20:00 and 22:00.
     # Later rechecks stop after full source + AI + poster QA succeeds.
     - cron: '0 8,9,10,11,12,14 * * *'
+    - cron: '45 14 * * *'  # 22:45 Taipei late-slate retry
   workflow_dispatch:
 
 permissions:
