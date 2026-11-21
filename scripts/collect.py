@@ -131,7 +131,7 @@ def usable_odds(odds):
     if not odds:
         return False
     for market in ("asian", "euro", "ou"):
-        for phase in ("open", "live"):
+        for phase in (("live",) if market == "euro" else ("open", "live")):
             data = odds.get(market + "_" + phase)
             if not data or len(data) != 3:
                 return False
@@ -241,6 +241,48 @@ def browser_source():
                         entries: example.oddsList.items.length,
                         first: example.oddsList.items[0]} : null};
             }""")
+            # Read European 1x2 odds from real Crow rows for selected scheduled
+            # fixtures. These are not deduced from Asian/total odds.
+            browse_markets = browser_market_rows(payload.get("flashMarkets", []))
+            taipei_today = dt.datetime.now(ZONE).date()
+            begin = dt.datetime.combine(taipei_today, dt.time(16), ZONE)
+            finish = begin + dt.timedelta(hours=16)
+            candidates = []
+            for source_row in payload["schedule"]:
+                if not isinstance(source_row, list) or len(source_row) < 14:
+                    continue
+                sid = str(source_row[0])
+                scheduled = stamp(str(source_row[12]))
+                state = int(source_row[13]) if str(source_row[13]).lstrip("-").isdigit() else -99
+                book = browse_markets.get(sid, {})
+                if not (scheduled and begin <= scheduled < finish and state in (-1, 0)):
+                    continue
+                if not (book.get("asian_open") and book.get("asian_live")
+                        and book.get("ou_open") and book.get("ou_live")):
+                    continue
+                if any(x is None for name in ("asian_open", "asian_live", "ou_open", "ou_live")
+                       for x in book[name]):
+                    continue
+                candidates.append({"id": sid, "league": clean(str(source_row[2])),
+                                   "kickoff": scheduled.isoformat(timespec="minutes")})
+            candidates.sort(key=selection_rank)
+            payload["euroOdds"] = {}
+            payload["euro_candidates"] = len(candidates)
+            for match in candidates[:12]:
+                sid = match["id"]
+                try:
+                    page.goto("https://1x2.titan007.com/Oddslist/" + sid + ".htm",
+                              wait_until="domcontentloaded", timeout=14000)
+                    row = page.locator("tr").filter(has_text=re.compile("Crow", re.I)).first
+                    cells = [x.strip() for x in row.locator("td").all_text_contents()]
+                    if len(cells) < 5:
+                        continue
+                    prices = [number(cells[i]) for i in (2, 3, 4)]
+                    if all(valid(x, 1.01, 500) for x in prices):
+                        payload["euroOdds"][sid] = prices
+                except Exception:
+                    continue
+            payload["euro_success"] = len(payload["euroOdds"])
             # Diagnostic: check whether a genuine 1x2 detail page is reachable.
             eid = (payload.get("oddsExample") or {}).get("id")
             if eid and str(eid).isdigit():
@@ -264,7 +306,7 @@ def browser_source():
         if not fields[0].isdigit():
             continue
         # Reuse the same source-field interpretation as the direct-feed parser.
-        time = stamp(fields[11])
+        time = stamp(fields[12]) or stamp(fields[11])
         try:
             state = int(fields[13])
         except ValueError:
@@ -293,6 +335,9 @@ def browser_source():
         odds[match_id] = parsed
     for match_id, market in browser_market_rows(payload.get("flashMarkets", [])).items():
         odds.setdefault(match_id, market)
+    for match_id, euro in payload.get("euroOdds", {}).items():
+        if match_id in odds:
+            odds[match_id]["euro_live"] = euro
     return fixtures, odds, {"title": payload["title"][:100],
                              "browser_rows": len(payload["schedule"]),
                              "browser_market_arrays": len(payload["markets"]),
@@ -302,7 +347,9 @@ def browser_source():
                              "flash_type": payload.get("flashType"),
                              "odds_group_count": payload.get("oddsGroupCount"),
                              "odds_example": payload.get("oddsExample"),
-                             "euro_probe": payload.get("euroProbe")}
+                             "euro_probe": payload.get("euroProbe"),
+                             "euro_candidates": payload.get("euro_candidates"),
+                             "euro_success": payload.get("euro_success")}
 
 
 
