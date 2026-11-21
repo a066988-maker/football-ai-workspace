@@ -2,17 +2,17 @@
 
 [開啟手機與電腦工作台](https://a066988-maker.github.io/football-ai-workspace/)
 
-免費優先：GitHub Actions + GitHub Pages + Gemini。每天台灣時間 16:00 自動執行，工作台在手機上編輯賽事分析、比分、大小球方向，下載 1080×1920 PNG，複製小紅書簡體文案。
+免費優先：GitHub Actions + GitHub Pages + Gemini。每天台灣時間 16:00 自動執行；17:00、18:00 會自動補抓，已有當日成功分析就不重複產出，工作台在手機上編輯賽事分析、比分、大小球方向，下載 1080×1920 PNG，複製小紅書簡體文案。
 
 ## 每日流程
 
 1. 直接從球探足球即時資料來源嘗試取得賽事、歐賠、亞盤與大小球初盤／即時盤。
-2. 若球探拒絕雲端連線，透過免費 Playwright 無頭瀏覽器讀取已載入官網的足球資料。
+2. 若球探拒絕雲端連線，透過免費 Playwright 無頭瀏覽器及中文字型讀取已載入官網的足球資料。
 3. 如球探完全不可用，嘗試 ESPN 公開賽程作備援。**備援僅用於賽程展示，絕不能當成球探盤口。**
 4. 將全部可確認的晚間賽程與各聯賽場數輸出至 output/fixtures.json。
 5. 只有 3～5 場比賽有完整、數值合法的球探盤口時，才允許 Gemini 分析；逐項檢查 AI 推薦盤口、三個比分及資料來源。
-6. 發布 output/status.json，成功時另發布 output/analysis.json；網站自動讀取並產生圖片與文案。
-7. 可選：如已設定 Telegram Bot secrets，且當日分析成功，會傳送摘要與網站連結至 Telegram。
+6. 發布 output/status.json，成功時另發布 output/analysis.json、output/poster.png（1080×1920）、output/xiaohongshu.txt；網站自動讀取，亦可下載並編輯圖片與文案。
+7. 可選：如已設定 Telegram Bot secrets，且當日分析成功，會傳送摘要、已生成的 PNG 圖片與網站連結至 Telegram。
 
 GitHub Actions 工作流程： [.github/workflows/daily.yml](.github/workflows/daily.yml)
 
