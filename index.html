@@ -142,15 +142,27 @@ function renderEditors(){
   });
 }
 async function readRemote(path){const url='https://raw.githubusercontent.com/a066988-maker/football-ai-workspace/main/'+path+'?v='+Date.now();const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
+function taipeiToday(){
+  const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+  const obj=Object.fromEntries(parts.map(p=>[p.type,p.value]));
+  return obj.year+'-'+obj.month+'-'+obj.day;
+}
+function clearStaleOutput(){
+  E('data').value='';E('copy').value='';
+  E('editors').textContent='今日尚無通過全部 QA 的分析資料。';
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+}
 async function refresh(){
   E('daily-state').textContent='正在讀取已發布的每日資料……';
   try{
     const status=await readRemote('output/status.json');
     const day=(status.window_start||'').slice(0,10);
     currentDay=day;
+    const fresh=day===taipeiToday();
     let message='最近執行：'+(status.updated_at||'未知')+'\n資料狀態：'+status.status+
       '\n指定時段賽事：'+(status.window_fixture_count??'—')+' 場，完整盤口：'+(status.complete_odds_count??'—')+' 場';
     if(status.message)message+='\n'+status.message;
+    if(!fresh)message+='\n注意：這是前一日期的歷史結果，不能當作今天的推薦。';
     E('daily-state').textContent=message;
     try{
       const qa=await readRemote('output/qa_report.json');
@@ -169,7 +181,7 @@ async function refresh(){
       const rows=(calendar.fixtures||[]).map(m=>m.kickoff.slice(5,16).replace('T',' ')+' '+m.league+'｜'+m.home+' vs '+m.away+(m.has_complete_odds?' ✓':' 盘未齐'));
       E('fixtures-list').textContent='联赛场数：'+(summary||'—')+'\n\n'+(rows.join('\n')||'该时段暂无已取得的赛事');
     }catch(ex){E('fixtures-list').textContent='完整賽程尚未發布：'+ex.message}
-    if(status.status==='analysis_ready'){
+    if(status.status==='analysis_ready' && fresh){
       const data=await readRemote('output/analysis.json');
       if(!data.matches||!data.matches.length)throw Error('分析檔案沒有賽事');
       const cached=JSON.parse(localStorage.getItem(STORE)||'null');
@@ -177,9 +189,11 @@ async function refresh(){
       renderEditors();make();
       if(cached&&cached.date===day&&cached.copy)E('copy').value=cached.copy;
     }else{
+      clearStaleOutput();
       note('目前沒有可用的當日已驗證分析；不會自動產生假盤口或假推薦。');
     }
   }catch(ex){E('daily-state').textContent='每日產出尚未發布或讀取失敗：'+ex.message;
+    clearStaleOutput();
     note('可以人工載入已核實 JSON；工作台不會自行捏造賽事。')}
 }
 function download(name,blob){
