@@ -1,19 +1,19 @@
 {
-  "checked_at": "2026-11-22T23:50:38+08:00",
-  "github_run_id": "45040366706",
-  "status": "passed",
+  "checked_at": "2026-11-23T04:50:47+08:00",
+  "github_run_id": "45068644901",
+  "status": "blocked",
   "checks": {
-    "fixture_source": "passed",
-    "asian_and_total_odds": "passed",
-    "gemini_generation": "unavailable_fallback_used",
-    "independent_ai_review": "not_run_rules_only",
-    "scores_and_language": "passed_rule_based",
-    "poster_and_copy": "passed"
+    "fixture_source": "schedule_only",
+    "asian_and_total_odds": "blocked",
+    "gemini_generation": "pending",
+    "independent_ai_review": "pending",
+    "scores_and_language": "pending",
+    "poster_and_copy": "pending"
   },
-  "errors": [],
-  "ai_attempts": 0,
-  "repairs": [
-    "Gemini unavailable: ValueError: Automatic AI review/rewrite failed: Attempt 1: Gemini model fallback exhausted: gemini-3.5-flash-lite: HTTP 503; gemini-3.8-flash: HTTP 503; interactions: HTTP 503"
+  "errors": [
+    "No validated Titan opening/current odds for this schedule. AI deliberately skipped."
   ],
-  "publish_allowed": true
+  "ai_attempts": 0,
+  "repairs": [],
+  "publish_allowed": false
 }
