@@ -1,42 +1,181 @@
 {
-  "date": "2026-11-23",
+  "date": "2026-11-24",
   "source": "https://site.api.espn.com/apis/site/v2/sports/soccer/",
-  "window_start": "2026-11-23T16:00+08:00",
-  "window_end": "2026-11-24T08:00+08:00",
+  "window_start": "2026-11-24T16:00+08:00",
+  "window_end": "2026-11-25T08:00+08:00",
   "league_counts": {
-    "意甲": 1,
-    "英超": 1,
-    "西甲": 1
+    "欧冠": 9,
+    "英冠": 8
   },
   "fixtures": [
     {
-      "id": "espn-401875009",
-      "league": "意甲",
-      "home": "Monza",
-      "away": "Fiorentina",
-      "kickoff": "2026-11-24T03:45+08:00",
+      "id": "espn-401915300",
+      "league": "欧冠",
+      "home": "Galatasaray",
+      "away": "Aston Villa",
+      "kickoff": "2026-11-25T01:45+08:00",
       "state": -1,
-      "source_url": "https://www.espn.com/soccer/match/_/gameId/401875009/fiorentina-monza",
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401915300/aston-villa-galatasaray",
       "has_complete_odds": false
     },
     {
-      "id": "espn-401879237",
-      "league": "英超",
-      "home": "Brentford",
-      "away": "Everton",
-      "kickoff": "2026-11-24T04:00+08:00",
+      "id": "espn-401915380",
+      "league": "欧冠",
+      "home": "Bodo/Glimt",
+      "away": "LASK Linz",
+      "kickoff": "2026-11-25T01:45+08:00",
       "state": -1,
-      "source_url": "https://www.espn.com/soccer/match/_/gameId/401879237/everton-brentford",
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401915380/lask-linz-bodoglimt",
       "has_complete_odds": false
     },
     {
-      "id": "espn-401882802",
-      "league": "西甲",
-      "home": "Levante",
-      "away": "Elche",
-      "kickoff": "2026-11-24T04:00+08:00",
+      "id": "espn-401880142",
+      "league": "英冠",
+      "home": "Sheffield United",
+      "away": "Southampton",
+      "kickoff": "2026-11-25T03:45+08:00",
       "state": -1,
-      "source_url": "https://www.espn.com/soccer/match/_/gameId/401882802/elche-levante",
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401880142/southampton-sheffield-united",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401880143",
+      "league": "英冠",
+      "home": "Portsmouth",
+      "away": "West Ham United",
+      "kickoff": "2026-11-25T03:45+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401880143/west-ham-united-portsmouth",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401880144",
+      "league": "英冠",
+      "home": "Norwich City",
+      "away": "Queens Park Rangers",
+      "kickoff": "2026-11-25T03:45+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401880144/queens-park-rangers-norwich-city",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401880145",
+      "league": "英冠",
+      "home": "Middlesbrough",
+      "away": "Swansea City",
+      "kickoff": "2026-11-25T03:45+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401880145/swansea-city-middlesbrough",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401880146",
+      "league": "英冠",
+      "home": "Charlton Athletic",
+      "away": "Lincoln City",
+      "kickoff": "2026-11-25T03:45+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401880146/lincoln-city-charlton-athletic",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401880147",
+      "league": "英冠",
+      "home": "Cardiff City",
+      "away": "Preston North End",
+      "kickoff": "2026-11-25T03:45+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401880147/preston-north-end-cardiff-city",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401880148",
+      "league": "英冠",
+      "home": "Bristol City",
+      "away": "Wrexham",
+      "kickoff": "2026-11-25T03:45+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401880148/wrexham-bristol-city",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401880141",
+      "league": "英冠",
+      "home": "Wolverhampton Wanderers",
+      "away": "Derby County",
+      "kickoff": "2026-11-25T04:00+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401880141/derby-county-wolverhampton-wanderers",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401915294",
+      "league": "欧冠",
+      "home": "Feyenoord Rotterdam",
+      "away": "FC Porto",
+      "kickoff": "2026-11-25T04:00+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401915294/fc-porto-feyenoord-rotterdam",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401915295",
+      "league": "欧冠",
+      "home": "Arsenal",
+      "away": "Borussia Dortmund",
+      "kickoff": "2026-11-25T04:00+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401915295/borussia-dortmund-arsenal",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401915296",
+      "league": "欧冠",
+      "home": "Como",
+      "away": "AEK Athens",
+      "kickoff": "2026-11-25T04:00+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401915296/aek-athens-como",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401915297",
+      "league": "欧冠",
+      "home": "Slovan Bratislava",
+      "away": "Real Betis",
+      "kickoff": "2026-11-25T04:00+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401915297/real-betis-slovan-bratislava",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401915298",
+      "league": "欧冠",
+      "home": "Real Madrid",
+      "away": "PSV Eindhoven",
+      "kickoff": "2026-11-25T04:00+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401915298/psv-eindhoven-real-madrid",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401915299",
+      "league": "欧冠",
+      "home": "RB Leipzig",
+      "away": "Lens",
+      "kickoff": "2026-11-25T04:00+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401915299/lens-rb-leipzig",
+      "has_complete_odds": false
+    },
+    {
+      "id": "espn-401915379",
+      "league": "欧冠",
+      "home": "Manchester City",
+      "away": "Napoli",
+      "kickoff": "2026-11-25T04:00+08:00",
+      "state": -1,
+      "source_url": "https://www.espn.com/soccer/match/_/gameId/401915379/napoli-manchester-city",
       "has_complete_odds": false
     }
   ]
