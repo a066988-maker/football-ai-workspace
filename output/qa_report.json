@@ -1,6 +1,6 @@
 {
-  "checked_at": "2026-11-25T07:40:08+08:00",
-  "github_run_id": "45511678608",
+  "checked_at": "2026-11-26T02:25:33+08:00",
+  "github_run_id": "45674067567",
   "status": "blocked",
   "checks": {
     "fixture_source": "schedule_only",
