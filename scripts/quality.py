@@ -16,7 +16,7 @@ OUT = ROOT / "output"
 ZONE = ZoneInfo("Asia/Taipei")
 IMMUTABLE = ("id", "league", "home", "away", "kickoff", "source_url",
              "odds_checked_at", "asian_open", "asian_live", "euro_live",
-             "ou_open", "ou_live")
+             "ou_open", "ou_live", "euro_open", "odds_provider", "odds_book_id")
 # No team form, injuries or table positions are supplied by the current feed.
 UNSOURCED = re.compile(
     r"伤停|伤缺|伤病|停赛|缺阵|首发|伤情|伤员|复出|主力缺席|"
@@ -95,10 +95,12 @@ def input_issues(source, status, now=None):
     except (ValueError, KeyError, TypeError) as exc:
         return [type(exc).__name__ + ": " + str(exc)[:180]]
     method = status.get("collection_method", "")
-    if method not in ("direct_public_feed", "browser_loaded_public_source"):
-        issues.append("Only genuine Titan match data may be sent to Gemini")
-    if not str(source.get("source", "")).startswith("Titan007"):
-        issues.append("Verified input does not declare Titan007 as its source")
+    provider = str(source.get("source", ""))
+    if method == "aiscore_public_backup":
+        if provider != "AiScore public pre-match odds backup" or len(matches) != 4:
+            issues.append("AiScore backup requires four fully verified fixtures from the same provider")
+    elif method not in ("direct_public_feed", "browser_loaded_public_source", "titan_dated_and_live", "titan_dated_schedule") or not provider.startswith("Titan007"):
+        issues.append("Only verified Titan data or the explicitly listed AiScore backup is allowed")
     day = now.date()
     start = dt.datetime.combine(day, dt.time(16), ZONE)
     end = start + dt.timedelta(hours=16)

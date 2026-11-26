@@ -1,6 +1,6 @@
 """Offline deterministic fallback when all Gemini routes are unavailable.
 
-Uses ONLY independently verified Titan match/odds inputs. This is not AI and
+Uses ONLY independently verified match/odds inputs. This is not AI and
 must be labeled as a rules-based pre-match observation in every output.
 """
 import json
@@ -104,7 +104,8 @@ def build(matches):
             "scores": scores, "analysis": analysis,
         })
     result = {
-        "source": "Titan007 live public football feed",
+        "source": ("AiScore public pre-match odds backup" if matches[0].get("odds_provider") == "AiScore"
+                   else "Titan007 live public football feed"),
         "verified_at": matches[0]["odds_checked_at"],
         "matches": out,
         "analysis_engine": "rules_fallback",

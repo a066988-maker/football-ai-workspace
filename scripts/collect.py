@@ -690,6 +690,22 @@ def collect():
         upcoming = [m for m in available
                     if dt.datetime.fromisoformat(m["kickoff"]) > now + dt.timedelta(minutes=5)]
         ranked = sorted(upcoming, key=selection_rank)[:4]
+        provider = "Titan007 live public football feed"
+        if len(ranked) < 4 and any("欧联" in m["league"] or "欧罗巴" in m["league"] for m in window):
+            try:
+                from aiscore_backup import run
+                backup, diagnostics = run(start, end, dt.datetime.now(ZONE))
+                report["aiscore_backup"] = diagnostics
+                backup = [m for m in backup if usable_odds(m)]
+                if len(backup) == 4:
+                    ranked = sorted(backup, key=selection_rank)
+                    provider = "AiScore public pre-match odds backup"
+                    report["odds_provider"] = "AiScore"
+                    report["titan_verified_count"] = len(available)
+                    report["collection_method"] = "aiscore_public_backup"
+                    report["source_note"] = "Fixtures retain original source. Analysis prices are separately sourced from AiScore."
+            except Exception as exc:
+                report["aiscore_backup_error"] = type(exc).__name__ + ": " + str(exc)[:120]
         counts = dict(sorted(Counter(m["league"] for m in window).items()))
         (OUT / "fixtures.json").write_text(
             json.dumps({
@@ -701,12 +717,12 @@ def collect():
             "feed_fixture_count": len(fixtures),
             "feed_market_count": len(odds),
             "window_fixture_count": len(window),
-            "complete_odds_count": len(available),
+            "complete_odds_count": len(ranked) if provider.startswith("AiScore") else len(available),
             "selected_count": len(ranked),
         })
         if len(ranked) >= 3:
             verified_payload = json.dumps({
-                "source": "Titan007 live public football feed",
+                "source": provider,
                 "verified_at": now.isoformat(timespec="seconds"),
                 "matches": ranked,
             }, ensure_ascii=False, indent=2)

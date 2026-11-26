@@ -29,6 +29,8 @@ def post_text(data):
             "比分：" + " / ".join(match["scores"]),
             "",
         ])
+    if str(data.get("source", "")).startswith("AiScore"):
+        lines.append("盘口来源：AiScore（球探备用）")
     lines.extend(["仅供赛事交流，不构成投注建议。", "#足球 #足球分析 #赛事前瞻"])
     return "\n".join(lines)
 
@@ -68,7 +70,8 @@ CANVAS_SCRIPT = r"""
     drawFit('比分 '+m.scores.join(' / '),73,y+189,906,35,'#dbe7f3');
     drawFit('趋势 '+m.trend,73,y+243,900,37,'#fbd18b');
   });
-  drawFit(method+' · 理性交流',65,1765,930,37,'#c2d4e0');
+  const tag = String(data.source || '').startsWith('AiScore') ? ' · 盘源 AiScore' : '';
+  drawFit(method+tag+' · 理性交流',65,1765,930,37,'#c2d4e0');
   drawFit('仅供赛事交流，不构成投注建议',65,1842,930,31,'#91abc0');
 }
 """
