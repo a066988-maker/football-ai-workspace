@@ -1,9 +1,9 @@
 {
-  "checked_at": "2026-11-26T07:20:12+08:00",
-  "github_run_id": "45720482859",
+  "checked_at": "2026-11-26T19:20:27+08:00",
+  "github_run_id": "45808739798",
   "status": "blocked",
   "checks": {
-    "fixture_source": "schedule_only",
+    "fixture_source": "unavailable",
     "asian_and_total_odds": "blocked",
     "gemini_generation": "pending",
     "independent_ai_review": "pending",
@@ -11,7 +11,7 @@
     "poster_and_copy": "pending"
   },
   "errors": [
-    "No validated Titan opening/current odds for this schedule. AI deliberately skipped."
+    "Fewer than three scheduled matches have all opening/current Titan odds; AI analysis not run."
   ],
   "ai_attempts": 0,
   "repairs": [],
