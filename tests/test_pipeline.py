@@ -1,4 +1,5 @@
 """Offline safety tests: no live network calls, no Gemini quota used."""
+import datetime as dt
 import json
 import sys
 import unittest
@@ -21,6 +22,28 @@ class TitanParserTests(unittest.TestCase):
         self.assertEqual(items[0]["away"], "阿森纳")
         self.assertEqual(items[0]["kickoff"], "2026-11-21T19:30+08:00")
         self.assertEqual(items[0]["state"], -1)
+
+    def test_titan_dated_schedule_matches_midnight_and_explicit_fixture_id(self):
+        def row(mid, kickoff, score="-"):
+            return (f"<tr sId='{mid}'><td>欧罗巴杯</td><td>{kickoff}</td><td></td>"
+                    "<td><span name='order'><font>[法甲3]</font></span>马赛</td>"
+                    f"<td><b>{score}</b></td><td>索非亚列夫斯基"
+                    "<span name='order'>[保超1]</span></td><td></td><td></td><td></td>"
+                    "<td>亚 欧 析</td></tr>")
+        start = dt.datetime(2026, 11, 26, 16, tzinfo=collect.ZONE)
+        end = start + dt.timedelta(hours=16)
+        raw = ("<script>var currDate = '2026-11-26';</script><table>"
+               + row(3073802, '11-27 01:45') + row(3073803, '11-27 08:00')
+               + row(3073804, '11-26 08:30') + row(3073805, '11-26 18:30', '1-1')
+               + row(3073806, '11-28 02:00') + "</table>")
+        matches = collect.dated_fixture_rows(raw, start.date(), start, end)
+        self.assertEqual([(m['id'], m['home'], m['away'], m['kickoff']) for m in matches],
+                         [('3073802', '马赛', '索非亚列夫斯基', '2026-11-27T01:45+08:00')])
+        self.assertEqual(collect.dated_fixture_rows(raw.replace('2026-11-26', '2026-11-25'),
+                                                  start.date(), start, end), [])
+        self.assertEqual(collect.detail_candidates(matches, start, end, start), matches)
+        near_kickoff = end - dt.timedelta(hours=6, minutes=17)
+        self.assertEqual(collect.detail_candidates(matches, start, end, near_kickoff), [])
 
     def test_odds_and_unavailable(self):
         js = ('sData[2906701]=['

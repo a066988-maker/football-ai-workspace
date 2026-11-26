@@ -12,6 +12,8 @@ import re
 import urllib.error
 import urllib.request
 from collections import Counter
+from html.parser import HTMLParser
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -25,7 +27,7 @@ HEADERS = {
     "Referer": "https://live.titan007.com/",
     "Accept": "text/javascript,text/plain,*/*",
 }
-LEAGUE_PRIORITY = ("英超", "西甲", "意甲", "德甲", "法甲", "欧冠", "歐冠", "欧联", "歐聯",
+LEAGUE_PRIORITY = ("英超", "西甲", "意甲", "德甲", "法甲", "欧冠", "歐冠", "欧联", "歐聯", "欧罗巴", "歐霸", "欧协联", "歐協聯",
                    "英冠", "葡超", "荷甲", "日职", "日職", "澳超", "美职", "美職")
 
 
@@ -223,7 +225,118 @@ def detail_market(kind, cells):
     return {kind + "_open": opening, kind + "_live": current}
 
 
-def browser_source():
+
+DATED_BASE = "https://bf.titan007.com/football/"
+
+
+class TitanScheduleTable(HTMLParser):
+    """Read labelled match rows, including the data provider's own match ID."""
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.rows = []
+        self.row = None
+        self.cell = None
+        self.in_order = False
+
+    def handle_starttag(self, tag, attrs):
+        attrs = dict(attrs)
+        if tag == "tr":
+            mid = attrs.get("sid") or ""
+            self.row = (mid, []) if re.fullmatch(r"\d{5,10}", mid) else None
+            self.cell = None
+            self.in_order = False
+        elif self.row and tag == "td":
+            self.cell = []
+        elif self.cell is not None and tag == "span" and attrs.get("name") == "order":
+            self.in_order = True
+
+    def handle_data(self, data):
+        if self.cell is not None and not self.in_order:
+            self.cell.append(data)
+
+    def handle_endtag(self, tag):
+        if self.cell is not None and tag == "span":
+            self.in_order = False
+        elif self.cell is not None and tag == "td":
+            self.row[1].append("".join(self.cell).strip())
+            self.cell = None
+            self.in_order = False
+        elif tag == "tr" and self.row:
+            self.rows.append(self.row)
+            self.row = None
+            self.cell = None
+
+
+def dated_fixture_rows(source, page_date, start, end):
+    # Verify the server returned the requested date rather than e.g. a homepage.
+    marker = re.search(r"""\bcurrDate\s*=\s*['"](\d{4}-\d{2}-\d{2})['"]""", source)
+    if not marker or marker[1] != page_date.isoformat():
+        return []
+    parser = TitanScheduleTable()
+    parser.feed(source)
+    matches = {}
+    for mid, cells in parser.rows:
+        if len(cells) < 10 or cells[4] not in ("-", "－"):
+            continue
+        time = re.fullmatch(r"(\d{2})-(\d{2})\s+(\d{2}):(\d{2})", cells[1])
+        if not time:
+            continue
+        month, day, hour, minute = map(int, time.groups())
+        date = next((d for d in (page_date, page_date + dt.timedelta(days=1))
+                     if (d.month, d.day) == (month, day)), None)
+        if not date:
+            continue
+        try:
+            kickoff = dt.datetime.combine(date, dt.time(hour, minute), ZONE)
+        except ValueError:
+            continue
+        league, home, away = cells[0], cells[3], cells[5]
+        if not (start <= kickoff < end and league and home and away and home != away):
+            continue
+        matches[mid] = {"id": mid, "league": league, "home": home, "away": away,
+                        "kickoff": kickoff.isoformat(timespec="minutes"), "state": 0,
+                        "source_url": "https://bf.titan007.com/detail/" + mid + ".htm"}
+    return list(matches.values())
+
+
+def dated_schedule(start, end):
+    def read(date):
+        url = DATED_BASE + "Next_" + date.strftime("%Y%m%d") + ".htm"
+        try:
+            req = urllib.request.Request(url, headers={
+                **HEADERS, "Accept": "text/html", "Referer": DATED_BASE})
+            with urllib.request.urlopen(req, timeout=12) as response:
+                if response.status != 200:
+                    return [], f"HTTP {response.status}"
+                raw = response.read(2_500_000)
+            try:
+                source = raw.decode("utf-8-sig")
+            except UnicodeDecodeError:
+                source = raw.decode("gb18030")
+            rows = dated_fixture_rows(source, date, start, end)
+            return rows, f"{len(rows)} eligible rows"
+        except (OSError, ValueError) as exc:
+            return [], type(exc).__name__ + ": " + str(exc)[:100]
+
+    dates = (start.date(), end.date())
+    rows, diagnostics = {}, {}
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        for date, (found, message) in zip(dates, pool.map(read, dates)):
+            diagnostics[date.isoformat()] = message
+            for match in found:
+                rows.setdefault(match["id"], match)
+    return list(rows.values()), diagnostics
+
+
+def detail_candidates(fixtures, start, end, now):
+    return sorted((m for m in fixtures
+                   if m["state"] in (-1, 0)
+                   and start <= dt.datetime.fromisoformat(m["kickoff"]) < end
+                   and dt.datetime.fromisoformat(m["kickoff"]) > now + dt.timedelta(minutes=5)),
+                  key=selection_rank)
+
+
+def browser_source(dated_fixtures=(), now=None):
     """Use the public site's loaded JS if direct feed connections are blocked.
 
     Never infer market data from the presence of a UI element. Read actual
@@ -239,87 +352,104 @@ def browser_source():
                                     args=["--no-sandbox", "--disable-dev-shm-usage"], **options)
         try:
             page = browser.new_page(locale="zh-CN", timezone_id="Asia/Taipei")
-            page.goto("https://live.titan007.com/", wait_until="domcontentloaded", timeout=35000)
-            page.wait_for_function("Array.isArray(window.A) && window.A.length > 2",
-                                   timeout=25000)
+            payload = {"title": "", "schedule": [], "markets": [], "flashMarkets": []}
             try:
-                page.evaluate("() => { if (typeof window.loadBfOdds === 'function') window.loadBfOdds(); }")
-            except Exception:
-                pass
-            page.wait_for_timeout(2500)
-            payload = page.evaluate("""() => {
-                const schedule = Array.isArray(window.A) ? window.A.slice(1) : [];
-                const markets = (typeof window.sData === 'object' && window.sData)
-                  ? Object.entries(window.sData).filter(([id, rows]) =>
-                      /^\d{5,10}$/.test(id) && Array.isArray(rows)).slice(0, 3000)
-                  : [];
-                const oddsGroups = window.flashData?.bfOddsList?.items || [];
-                const example = oddsGroups.find(g => g?.oddsList?.items?.length);
-                return {schedule, markets, title: document.title,
-                    flashMarkets: oddsGroups.map(g => ({id: g.sId, items: (g.oddsList?.items || []).slice(-8)})),
-                    sample: schedule.filter(Array.isArray).slice(0, 2).map(r => r.slice(0, 20)),
-                    pendingSample: schedule.filter(Array.isArray).filter(r => Number(r[13]) <= 0).slice(0, 8).map(r => ({length:r.length, fields:r.slice(0,32)})),
-                    pendingDom: schedule.filter(Array.isArray).filter(r=>Number(r[13])<=0).slice(0,2).map(r=>({id:r[0],html:document.getElementById("tr1_"+r[0])?.outerHTML.slice(0,2500)||""})),
-                    flashType: typeof window.flashData,
-                    oddsGroupCount: oddsGroups.length,
-                    oddsExample: example ? {id: example.sId,
-                        entries: example.oddsList.items.length,
-                        first: example.oddsList.items[0]} : null};
-            }""")
+                page.goto("https://live.titan007.com/", wait_until="domcontentloaded", timeout=35000)
+                page.wait_for_function("Array.isArray(window.A) && window.A.length > 2",
+                                       timeout=25000)
+                try:
+                    page.evaluate("() => { if (typeof window.loadBfOdds === 'function') window.loadBfOdds(); }")
+                except Exception:
+                    pass
+                page.wait_for_timeout(2500)
+                payload = page.evaluate(r"""() => {
+                    const schedule = Array.isArray(window.A) ? window.A.slice(1) : [];
+                    const markets = (typeof window.sData === 'object' && window.sData)
+                      ? Object.entries(window.sData).filter(([id, rows]) =>
+                          /^\d{5,10}$/.test(id) && Array.isArray(rows)).slice(0, 3000)
+                      : [];
+                    const oddsGroups = window.flashData?.bfOddsList?.items || [];
+                    const example = oddsGroups.find(g => g?.oddsList?.items?.length);
+                    return {schedule, markets, title: document.title,
+                        flashMarkets: oddsGroups.map(g => ({id: g.sId, items: (g.oddsList?.items || []).slice(-8)})),
+                        sample: schedule.filter(Array.isArray).slice(0, 2).map(r => r.slice(0, 20)),
+                        pendingSample: schedule.filter(Array.isArray).filter(r => Number(r[13]) <= 0).slice(0, 8).map(r => ({length:r.length, fields:r.slice(0,32)})),
+                        pendingDom: schedule.filter(Array.isArray).filter(r=>Number(r[13])<=0).slice(0,2).map(r=>({id:r[0],html:document.getElementById("tr1_"+r[0])?.outerHTML.slice(0,2500)||""})),
+                        flashType: typeof window.flashData,
+                        oddsGroupCount: oddsGroups.length,
+                        oddsExample: example ? {id: example.sId,
+                            entries: example.oddsList.items.length,
+                            first: example.oddsList.items[0]} : null};
+                }""")
+            except Exception as exc:
+                payload["homepage_error"] = type(exc).__name__ + ": " + str(exc)[:140]
             # Check up to eight upcoming fixtures against separate match-specific
             # Titan European, Asian and totals pages. Every visited page must
             # have the expected home AND away names, or its odds are rejected.
-            taipei_today = dt.datetime.now(ZONE).date()
-            begin = dt.datetime.combine(taipei_today, dt.time(16), ZONE)
+            now = now or dt.datetime.now(ZONE)
+            begin = dt.datetime.combine(now.date(), dt.time(16), ZONE)
             finish = begin + dt.timedelta(hours=16)
-            candidates = []
+            # Dated pages use the provider's own match IDs; never match ESPN by name.
+            choices = {m["id"]: m for m in dated_fixtures}
+            live_choices = {}
             for source_row in payload["schedule"]:
                 if not isinstance(source_row, list) or len(source_row) < 14:
                     continue
                 sid = str(source_row[0])
-                scheduled = stamp(str(source_row[12]))
+                scheduled = stamp(str(source_row[12])) or stamp(str(source_row[11]))
                 state = int(source_row[13]) if str(source_row[13]).lstrip("-").isdigit() else -99
-                if not (scheduled and begin <= scheduled < finish and state in (-1, 0)):
+                if not (scheduled and sid.isdigit()):
                     continue
-                home = clean(str(source_row[5] or source_row[4]))
-                away = clean(str(source_row[8] or source_row[7]))
-                league = clean(str(source_row[2]))
-                if not (home and away and league):
+                home = clean(str(source_row[5] or source_row[4] or ""))
+                away = clean(str(source_row[8] or source_row[7] or ""))
+                league = clean(str(source_row[2] or ""))
+                if not (home and away and league and home != away):
                     continue
-                candidates.append({"id": sid, "league": league, "home": home,
-                                   "away": away,
-                                   "kickoff": scheduled.isoformat(timespec="minutes")})
-            candidates.sort(key=selection_rank)
+                live_choices[sid] = {"id": sid, "league": league, "home": home,
+                                     "away": away, "state": state,
+                                     "kickoff": scheduled.isoformat(timespec="minutes")}
+            choices.update(live_choices)
+            candidates = detail_candidates(choices.values(), begin, finish, now)
+            payload["dated_candidates"] = len(dated_fixtures)
+            payload["homepage_candidates"] = len(detail_candidates(live_choices.values(), begin, finish, now))
             payload["detailOdds"] = {}
             payload["euro_candidates"] = len(candidates)
             payload["euro_attempted"] = 0
+            payload["market_results"] = {}
             for match in candidates[:8]:
                 sid = match["id"]
                 markets = {}
                 endpoints = (
-                    ("euro", "https://1x2.titan007.com/Oddslist/" + sid + ".htm"),
-                    ("asian", "https://vip.titan007.com/AsianOdds_n.aspx?id=" + sid),
-                    ("ou", "https://vip.titan007.com/OverDown_n.aspx?id=" + sid),
+                    ("euro", "https://1x2.titan007.com/oddslist/" + sid + ".htm"),
+                    ("asian", "https://vip.titan007.com/AsianOdds_n.aspx?id=" + sid + "&l=0"),
+                    ("ou", "https://vip.titan007.com/OverDown_n.aspx?id=" + sid + "&l=0"),
                 )
                 for kind, url in endpoints:
                     try:
                         payload["euro_attempted"] += 1
-                        page.goto(url, wait_until="domcontentloaded", timeout=12000)
-                        title = page.title().replace(" ", "")
-                        if (match["home"].replace(" ", "") not in title or
-                                match["away"].replace(" ", "") not in title):
-                            continue
-                        row = page.locator("tr").filter(has_text=re.compile("Crow", re.I)).first
-                        if not row.count():
-                            row = page.locator('tr[id^="oddstr_"]').first
-                        if not row.count():
-                            continue
-                        cells = [v.strip() for v in row.locator("td").all_text_contents()]
-                        parsed = detail_market(kind, cells)
-                        if parsed:
-                            markets.update(parsed)
-                    except Exception:
-                        continue
+                        response = page.goto(url, wait_until="domcontentloaded", timeout=10000)
+                        if response is None or response.status != 200:
+                            outcome = f"HTTP {response.status}" if response else "no response"
+                        else:
+                            title = re.sub(r"\s+|[（(]中[)）]", "", page.title())
+                            names = [re.sub(r"\s+|[（(]中[)）]", "", match[side]) for side in ("home", "away")]
+                            if not all(name and name in title for name in names):
+                                outcome = "title_mismatch"
+                            else:
+                                row = page.locator("tr").filter(has_text=re.compile("Crow", re.I)).first
+                                if not row.count():
+                                    row = page.locator('tr[id^="oddstr_"]').first
+                                if row.count() and row.is_visible():
+                                    cells = [v.strip() for v in row.locator("td").all_inner_texts()]
+                                    parsed = detail_market(kind, cells)
+                                else:
+                                    parsed = None
+                                if parsed:
+                                    markets.update(parsed)
+                                outcome = "parsed" if parsed else "no_visible_complete_market"
+                    except Exception as exc:
+                        outcome = type(exc).__name__
+                    payload["market_results"].setdefault(sid, {})[kind] = outcome
                 if markets:
                     payload["detailOdds"][sid] = markets
             payload["euro_success"] = sum(
@@ -329,7 +459,7 @@ def browser_source():
             )
             # Diagnostic: check whether a genuine 1x2 detail page is reachable.
             eid = (payload.get("oddsExample") or {}).get("id")
-            if eid and str(eid).isdigit():
+            if not candidates and eid and str(eid).isdigit():
                 try:
                     page.goto("https://1x2.titan007.com/Oddslist/" + str(eid) + ".htm",
                               wait_until="domcontentloaded", timeout=16000)
@@ -382,6 +512,9 @@ def browser_source():
     for match_id, details in payload.get("detailOdds", {}).items():
         odds.setdefault(match_id, {}).update(details)
     return fixtures, odds, {"title": payload["title"][:100],
+                             "homepage_error": payload.get("homepage_error"),
+                             "dated_candidates": payload.get("dated_candidates"),
+                             "homepage_candidates": payload.get("homepage_candidates"),
                              "browser_rows": len(payload["schedule"]),
                              "browser_market_arrays": len(payload["markets"]),
                              "schedule_sample": payload.get("sample", []),
@@ -393,6 +526,7 @@ def browser_source():
                              "euro_probe": payload.get("euroProbe"),
                              "euro_candidates": payload.get("euro_candidates"),
                              "euro_success": payload.get("euro_success"),
+                             "market_results": payload.get("market_results"),
                              "detail_pages_requested": payload.get("euro_attempted")}
 
 
@@ -483,49 +617,57 @@ def collect():
         "source_note": "Public Titan007 football feed; no invented matches/odds",
     }
     try:
+        fixtures, odds = [], {}
         try:
             schedule_text = fetch("bfdata_ut.js")
-            odds_text = fetch("sbOddsData.js")
             fixtures = fixture_rows(schedule_text)
-            odds = odds_rows(odds_text)
+            odds = odds_rows(fetch("sbOddsData.js"))
             report["collection_method"] = "direct_public_feed"
-        except (OSError, ValueError, urllib.error.URLError) as direct_exc:
-            report["direct_error"] = type(direct_exc).__name__ + ": " + str(direct_exc)[:160]
+        except (OSError, ValueError) as exc:
+            report["direct_error"] = type(exc).__name__ + ": " + str(exc)[:160]
+
+        initial = detail_candidates(fixtures, start, end, now)
+        if sum(usable_odds(odds.get(m["id"])) for m in initial) < 4:
+            dated, diagnostics = dated_schedule(start, end)
+            report["dated_schedule"] = diagnostics
+            combined = {m["id"]: m for m in dated}
+            combined.update({m["id"]: m for m in fixtures})
+            if dated:
+                report["collection_method"] = "titan_dated_schedule"
+                report["source"] = DATED_BASE
+                report["source_note"] = "Titan007 dated football schedule plus verified public markets when available."
             try:
-                fixtures, odds, diagnostics = browser_source()
-                report["collection_method"] = "browser_loaded_public_source"
+                browser_fixtures, browser_odds, diagnostics = browser_source(dated, now)
                 report["browser_diagnostics"] = diagnostics
-                if not fixtures:
-                    raise ValueError("Browser returned no fixtures with independently usable kickoff dates")
-            except Exception as browser_exc:
-                report["browser_error"] = type(browser_exc).__name__ + ": " + str(browser_exc)[:160]
-                fixtures, diagnostics = espn_schedule(start, end)
-                odds = {}
-                report["collection_method"] = "espn_auxiliary_schedule_only"
-                report["schedule_diagnostics"] = diagnostics
-                report["source"] = "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-                report["source_note"] = "ESPN schedule only. Titan odds unavailable; no AI predictions."
+                if browser_fixtures or browser_odds:
+                    report["collection_method"] = "titan_dated_and_live" if dated else "browser_loaded_public_source"
+                combined.update({m["id"]: m for m in browser_fixtures})
+                for mid, market in browser_odds.items():
+                    existing = odds.get(mid)
+                    if usable_odds(market) or not existing:
+                        odds[mid] = market
+                    elif not usable_odds(existing):
+                        for keys in (("asian_open", "asian_live"), ("ou_open", "ou_live"), ("euro_live",)):
+                            if all(market.get(key) and all(v is not None for v in market[key])
+                                   for key in keys):
+                                existing.update({key: market[key] for key in keys})
+            except Exception as exc:
+                report["browser_error"] = type(exc).__name__ + ": " + str(exc)[:160]
+            fixtures = list(combined.values())
+
         window = [m for m in fixtures
                   if start <= dt.datetime.fromisoformat(m["kickoff"]) < end
                   and m["state"] in (-1, 0)]
-        if not window and report.get("collection_method") == "browser_loaded_public_source":
-            # Titan live scoreboard may still show yesterday's slate in the
-            # morning. Do not assign tomorrow's date to old live matches.
-            # Show separately sourced ESPN fixtures until Titan's next slate
-            # appears; do not run AI with ESPN-only schedules.
-            try:
-                alternate, diagnostics = espn_schedule(start, end)
-                if alternate:
-                    fixtures, odds = alternate, {}
-                    window = [m for m in alternate
-                              if start <= dt.datetime.fromisoformat(m["kickoff"]) < end
-                              and m["state"] in (-1, 0)]
-                    report["collection_method"] = "espn_auxiliary_schedule_only"
-                    report["schedule_diagnostics"] = diagnostics
-                    report["source"] = "https://site.api.espn.com/apis/site/v2/sports/soccer/"
-                    report["source_note"] = "ESPN next-slate schedule; Titan currently shows previous slate. No Titan odds asserted."
-            except Exception as alternate_exc:
-                report["schedule_fallback_error"] = type(alternate_exc).__name__ + ": " + str(alternate_exc)[:120]
+        if not window:
+            alternate, diagnostics = espn_schedule(start, end)
+            fixtures, odds = alternate, {}
+            window = [m for m in alternate
+                      if start <= dt.datetime.fromisoformat(m["kickoff"]) < end
+                      and m["state"] in (-1, 0)]
+            report["collection_method"] = "espn_auxiliary_schedule_only"
+            report["schedule_diagnostics"] = diagnostics
+            report["source"] = "https://site.api.espn.com/apis/site/v2/sports/soccer/"
+            report["source_note"] = "ESPN schedule only. Titan odds unavailable; no AI predictions."
         window.sort(key=lambda m: (m["kickoff"], m["id"]))
         available = []
         for fixture in window:
