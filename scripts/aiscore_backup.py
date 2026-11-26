@@ -108,7 +108,10 @@ def collect_backup(browser, start, end, now):
     try:
         for league, address in LEAGUES.items():
             response = page.goto(BASE + address, wait_until="domcontentloaded", timeout=12000)
+            diag["league_response"] = {"http": response.status if response else None,
+                                       "url": page.url, "title": page.title()[:120]}
             if not response or not response.ok:
+                # Do not keep probing a source that denies or rate-limits the runner.
                 continue
             selector = 'a[itemprop="url"][href*="/match-"]'
             wanted = {d.strftime("%Y%m%d") for d in (start.date(), end.date())}
