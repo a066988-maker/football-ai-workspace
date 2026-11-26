@@ -8,10 +8,11 @@
     "中台联": 1,
     "丹麦甲": 1,
     "乌兹U21": 1,
+    "乌兹甲": 1,
     "乌干女超": 2,
     "乌干超": 2,
-    "亚冠联2": 3,
-    "以丙": 5,
+    "亚冠联2": 5,
+    "以丙": 6,
     "以乙北": 1,
     "以乙南": 1,
     "伊朗超": 1,
@@ -27,7 +28,7 @@
     "印西隆杯": 1,
     "叙利亚甲": 1,
     "喀麦女联": 1,
-    "国际友谊": 3,
+    "国际友谊": 4,
     "坦桑超": 1,
     "埃及甲": 6,
     "埃塞超": 1,
@@ -38,7 +39,7 @@
     "墨西U19": 1,
     "墨西U21": 1,
     "墨西丙": 1,
-    "女欧U19": 1,
+    "女欧U19": 2,
     "尼拉甲春": 1,
     "巴地区": 1,
     "巴女乙": 1,
@@ -51,13 +52,14 @@
     "德戊": 1,
     "智利丙": 1,
     "智利乙附": 1,
-    "格鲁乙": 1,
+    "格鲁乙": 4,
     "桑给超": 3,
     "欧协联": 18,
     "欧罗巴杯": 18,
     "沙特联": 5,
     "泰U21": 2,
     "泰甲": 1,
+    "澳锦标": 1,
     "牙买超": 1,
     "球会友谊": 5,
     "科元首杯": 2,
@@ -86,6 +88,7 @@
     "阿后备": 2,
     "阿图什杯": 1,
     "阿塞甲": 1,
+    "阿美甲": 1,
     "黑山U19": 1
   },
   "fixtures": [
@@ -240,6 +243,16 @@
       "has_complete_odds": false
     },
     {
+      "id": "3116404",
+      "league": "澳锦标",
+      "home": "南墨尔本",
+      "away": "欧克莱卡诺",
+      "kickoff": "2026-11-26T17:49+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/3116404cn.htm",
+      "has_complete_odds": false
+    },
+    {
       "id": "3116660",
       "league": "缅甸甲",
       "home": "欢乐兄弟FC",
@@ -307,6 +320,96 @@
       "kickoff": "2026-11-26T18:09+08:00",
       "state": -1,
       "source_url": "https://zq.titan007.com/analysis/2952394cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "2940949",
+      "league": "格鲁乙",
+      "home": "阿拉吉夫杜塞提",
+      "away": "玛瑞尼马尔特维利",
+      "kickoff": "2026-11-26T18:32+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/2940949cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "2940950",
+      "league": "格鲁乙",
+      "home": "萨加雷焦",
+      "away": "山姆特迪雅",
+      "kickoff": "2026-11-26T18:32+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/2940950cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "2940952",
+      "league": "格鲁乙",
+      "home": "奥迪希1919",
+      "away": "什图尔米",
+      "kickoff": "2026-11-26T18:36+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/2940952cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "3114954",
+      "league": "国际友谊",
+      "home": "西班牙U16",
+      "away": "美国U16",
+      "kickoff": "2026-11-26T18:37+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/3114954cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "3114724",
+      "league": "乌兹甲",
+      "home": "休尔坦古佐",
+      "away": "奥林匹克莫比兹",
+      "kickoff": "2026-11-26T18:59+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/3114724cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "3069078",
+      "league": "亚冠联2",
+      "home": "江原FC",
+      "away": "杰志",
+      "kickoff": "2026-11-26T19:02+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/3069078cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "3069079",
+      "league": "亚冠联2",
+      "home": "古晋足协",
+      "away": "金边皇冠",
+      "kickoff": "2026-11-26T19:02+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/3069079cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "3061562",
+      "league": "女欧U19",
+      "home": "塞尔维亚女足U19",
+      "away": "阿塞拜疆女足U19",
+      "kickoff": "2026-11-26T19:03+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/3061562cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "3048155",
+      "league": "阿美甲",
+      "home": "本托尼特",
+      "away": "舒拉克B队",
+      "kickoff": "2026-11-26T19:05+08:00",
+      "state": -1,
+      "source_url": "https://zq.titan007.com/analysis/3048155cn.htm",
       "has_complete_odds": false
     },
     {
@@ -1357,6 +1460,16 @@
       "kickoff": "2026-11-27T01:30+08:00",
       "state": 0,
       "source_url": "https://zq.titan007.com/analysis/3047042cn.htm",
+      "has_complete_odds": false
+    },
+    {
+      "id": "3117152",
+      "league": "以丙",
+      "home": "特泽尔卡法肯纳",
+      "away": "哈波尔汉纳",
+      "kickoff": "2026-11-27T01:30+08:00",
+      "state": 0,
+      "source_url": "https://zq.titan007.com/analysis/3117152cn.htm",
       "has_complete_odds": false
     },
     {
