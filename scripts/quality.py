@@ -9,11 +9,10 @@ import os
 import re
 import struct
 from pathlib import Path
-from zoneinfo import ZoneInfo
+from slate import ZONE, slate_window
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
-ZONE = ZoneInfo("Asia/Taipei")
 IMMUTABLE = ("id", "league", "home", "away", "kickoff", "source_url",
              "odds_checked_at", "asian_open", "asian_live", "euro_live",
              "ou_open", "ou_live", "euro_open", "odds_provider", "odds_book_id")
@@ -83,7 +82,7 @@ def safe_issues(data, originals):
     return issues
 
 
-def input_issues(source, status, now=None):
+def input_issues(source, status, now=None, window=None):
     """Check scope, traceability and freshness before spending a Gemini call."""
     import collect
     import analyze
@@ -101,9 +100,7 @@ def input_issues(source, status, now=None):
             issues.append("AiScore backup requires four fully verified fixtures from the same provider")
     elif method not in ("direct_public_feed", "browser_loaded_public_source", "titan_dated_and_live", "titan_dated_schedule") or not provider.startswith("Titan007"):
         issues.append("Only verified Titan data or the explicitly listed AiScore backup is allowed")
-    day = now.date()
-    start = dt.datetime.combine(day, dt.time(16), ZONE)
-    end = start + dt.timedelta(hours=16)
+    start, end = window if window is not None else slate_window(now)
     seen = set()
     for i, m in enumerate(matches, 1):
         label = "match " + str(i) + ": "
@@ -115,7 +112,7 @@ def input_issues(source, status, now=None):
             when = dt.datetime.fromisoformat(m["kickoff"])
             checked = dt.datetime.fromisoformat(m["odds_checked_at"])
             if when.tzinfo is None or not start <= when < end:
-                issues.append(label + "kickoff outside today's Taiwan window")
+                issues.append(label + "kickoff outside the target Taiwan slate")
             if checked.tzinfo is None or abs((now - checked).total_seconds()) > 6 * 3600:
                 issues.append(label + "odds timestamp not fresh")
         except (ValueError, TypeError, KeyError):

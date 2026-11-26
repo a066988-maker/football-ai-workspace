@@ -14,12 +14,13 @@ import notify
 import quality
 import render
 import rules_analysis
+from slate import ZONE, slate_window
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "output"
 
 
-def already_complete_today():
+def already_complete_slate(now=None):
     status_path = OUT / "status.json"
     analysis_path = OUT / "analysis.json"
     qa_path = OUT / "qa_report.json"
@@ -31,8 +32,8 @@ def already_complete_today():
         state = json.loads(status_path.read_text(encoding="utf-8"))
         qa = json.loads(qa_path.read_text(encoding="utf-8"))
         data = json.loads(analysis_path.read_text(encoding="utf-8"))
-        today = dt.datetime.now(dt.timezone(dt.timedelta(hours=8))).date().isoformat()
-        if state.get("status") not in ("analysis_ready", "analysis_ready_rules") or not state.get("window_start", "").startswith(today):
+        start, _ = slate_window(now)
+        if state.get("status") not in ("analysis_ready", "analysis_ready_rules") or state.get("window_start") != start.isoformat(timespec="minutes"):
             return False
         if qa.get("status") != "passed" or not qa.get("publish_allowed"):
             return False
@@ -50,15 +51,16 @@ def already_complete_today():
 
 
 def main():
+    now = dt.datetime.now(ZONE)
     OUT.mkdir(parents=True, exist_ok=True)
-    if already_complete_today():
-        print("Today has already passed all source/AI/assets QA checks. No duplicate delivery.")
+    if already_complete_slate(now):
+        print("This slate has already passed all source/AI/assets QA checks. No duplicate delivery.")
         return
 
     for filename in ("analysis.json", "poster.png", "xiaohongshu.txt", "qa_report.json"):
         (OUT / filename).unlink(missing_ok=True)
 
-    report = collect.collect()
+    report = collect.collect(now=now)
     checks = {
         "fixture_source": "pending",
         "asian_and_total_odds": "pending",
@@ -75,7 +77,7 @@ def main():
     if report["status"] == "verified_ready_for_ai":
         try:
             source = json.loads(analyze.INPUT.read_text(encoding="utf-8"))
-            failures = quality.input_issues(source, report)
+            failures = quality.input_issues(source, report, window=slate_window(now))
             if failures:
                 raise ValueError("; ".join(failures[:8]))
             checks["fixture_source"] = "passed"

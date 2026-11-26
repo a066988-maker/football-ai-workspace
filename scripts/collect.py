@@ -15,12 +15,11 @@ from collections import Counter
 from html.parser import HTMLParser
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from zoneinfo import ZoneInfo
+from slate import ZONE, slate_window
 
 ROOT = Path(__file__).resolve().parents[1]
 DATA = ROOT / "data"
 OUT = ROOT / "output"
-ZONE = ZoneInfo("Asia/Taipei")
 FEED_BASE = "https://livestatic.titan007.com/vbsxml/"
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (compatible; PersonalFootballResearch/1.0)",
@@ -387,8 +386,7 @@ def browser_source(dated_fixtures=(), now=None):
             # Titan European, Asian and totals pages. Every visited page must
             # have the expected home AND away names, or its odds are rejected.
             now = now or dt.datetime.now(ZONE)
-            begin = dt.datetime.combine(now.date(), dt.time(16), ZONE)
-            finish = begin + dt.timedelta(hours=16)
+            begin, finish = slate_window(now)
             # Dated pages use the provider's own match IDs; never match ESPN by name.
             choices = {m["id"]: m for m in dated_fixtures}
             live_choices = {}
@@ -598,16 +596,14 @@ def espn_schedule(start, end):
     return list(fixtures.values()), {"espn_requests": len(jobs), "espn_failures": failures}
 
 
-def collect():
+def collect(now=None):
     OUT.mkdir(parents=True, exist_ok=True)
     DATA.mkdir(parents=True, exist_ok=True)
-    # Prevent yesterday's fully verified input from leaking into today's analysis.
+    # Each attempt must rebuild verified inputs for the target slate.
     verified_path = DATA / "verified_matches.json"
     verified_path.unlink(missing_ok=True)
-    now = dt.datetime.now(ZONE)
-    today = now.date()
-    start = dt.datetime.combine(today, dt.time(16), ZONE)
-    end = start + dt.timedelta(hours=16)
+    now = now or dt.datetime.now(ZONE)
+    start, end = slate_window(now)
     report = {
         "updated_at": now.isoformat(timespec="seconds"),
         "status": "fetching",
@@ -712,7 +708,7 @@ def collect():
         counts = dict(sorted(Counter(m["league"] for m in window).items()))
         (OUT / "fixtures.json").write_text(
             json.dumps({
-                "date": today.isoformat(), "source": report["source"],
+                "date": start.date().isoformat(), "source": report["source"],
                 "window_start": report["window_start"], "window_end": report["window_end"],
                 "league_counts": counts, "fixtures": window
             }, ensure_ascii=False, indent=2), encoding="utf-8")

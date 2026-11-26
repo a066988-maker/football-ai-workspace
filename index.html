@@ -142,8 +142,10 @@ function renderEditors(){
   });
 }
 async function readRemote(path){const url='https://raw.githubusercontent.com/a066988-maker/football-ai-workspace/main/'+path+'?v='+Date.now();const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
-function taipeiToday(){
-  const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date());
+function taipeiSlateDate(now=new Date()){
+  // Match the backend: before 08:00 Taipei, keep the previous evening's slate.
+  const shifted=new Date(now.getTime()-8*60*60*1000);
+  const parts=new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Taipei',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(shifted);
   const obj=Object.fromEntries(parts.map(p=>[p.type,p.value]));
   return obj.year+'-'+obj.month+'-'+obj.day;
 }
@@ -156,14 +158,15 @@ async function refresh(){
   E('daily-state').textContent='正在讀取已發布的每日資料……';
   try{
     const status=await readRemote('output/status.json');
+    const slateDay=taipeiSlateDate();
     const day=(status.window_start||'').slice(0,10);
     currentDay=day;
-    const fresh=day===taipeiToday();
+    const fresh=day===slateDay;
     let message='最近執行：'+(status.updated_at||'未知')+'\n資料狀態：'+status.status+
       '\n指定時段賽事：'+(status.window_fixture_count??'—')+' 場，完整盤口：'+(status.complete_odds_count??'—')+' 場';
     if(status.message)message+='\n'+status.message;
     if(status.status==='analysis_ready_rules')message+='\n注意：本次是已核實盤口的規則分析，並非 Gemini AI 撰寫。';
-    if(!fresh)message+='\n注意：這是前一日期的歷史結果，不能當作今天的推薦。';
+    if(!fresh)message+='\n注意：這份結果不屬於目前時段，不能當作本輪推薦。';
     E('daily-state').textContent=message;
     try{
       const qa=await readRemote('output/qa_report.json');
@@ -178,7 +181,7 @@ async function refresh(){
     }catch(ex){E('qa-state').textContent='尚無新版多輪查錯報告：'+ex.message}
     try{
       const calendar=await readRemote('output/fixtures.json');
-      const sameDay=calendar.date===taipeiToday();
+      const sameDay=calendar.date===slateDay;
       const confirmed=(calendar.fixtures||[]).filter(m=>m.has_complete_odds);
       const featured=(confirmed.length?confirmed:(calendar.fixtures||[])).slice(0,4);
       const todayLines=featured.map(m=>'• '+m.kickoff.slice(5,16).replace('T',' ')+' '+m.league+'｜'+m.home+' vs '+m.away+(m.has_complete_odds?'（盤口已擷取，等待 AI 審核）':'（盤口未齊）'));
