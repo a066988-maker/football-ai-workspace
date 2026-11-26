@@ -335,6 +335,29 @@ def detail_candidates(fixtures, start, end, now):
                   key=selection_rank)
 
 
+def inspect_detail_row(page, kind):
+    """Inspect only a publicly visible row and distinguish failure reasons."""
+    # Titan may serve HTTP 200 with a registration prompt rather than odds.
+    login_wall = page.get_by_text(re.compile(r"(?:注册|註冊|登录|登入).{0,32}(?:免费|免費)(?:查看|查閱)(?:权益|權益)"))
+    if login_wall.count() and login_wall.first.is_visible():
+        return None, {"outcome": "registration_wall"}
+    preferred = page.locator("tr").filter(has_text=re.compile("Crow", re.I))
+    fallback = page.locator('tr[id^="oddstr_"]')
+    preferred_count, fallback_count = preferred.count(), fallback.count()
+    diag = {"preferred_rows": preferred_count, "fallback_rows": fallback_count}
+    if not (preferred_count or fallback_count):
+        return None, {**diag, "outcome": "row_missing"}
+
+    row = preferred.first if preferred_count else fallback.first
+    diag["selector"] = "preferred" if preferred_count else "fallback"
+    if not row.is_visible():
+        return None, {**diag, "outcome": "first_row_hidden"}
+    cells = [v.strip() for v in row.locator("td").all_inner_texts()]
+    parsed = detail_market(kind, cells)
+    return parsed, {**diag, "cell_count": len(cells),
+                    "outcome": "parsed" if parsed else "parser_rejected_visible_row"}
+
+
 def browser_source(dated_fixtures=(), now=None):
     """Use the public site's loaded JS if direct feed connections are blocked.
 
@@ -434,17 +457,9 @@ def browser_source(dated_fixtures=(), now=None):
                             if not all(name and name in title for name in names):
                                 outcome = "title_mismatch"
                             else:
-                                row = page.locator("tr").filter(has_text=re.compile("Crow", re.I)).first
-                                if not row.count():
-                                    row = page.locator('tr[id^="oddstr_"]').first
-                                if row.count() and row.is_visible():
-                                    cells = [v.strip() for v in row.locator("td").all_inner_texts()]
-                                    parsed = detail_market(kind, cells)
-                                else:
-                                    parsed = None
+                                parsed, outcome = inspect_detail_row(page, kind)
                                 if parsed:
                                     markets.update(parsed)
-                                outcome = "parsed" if parsed else "no_visible_complete_market"
                     except Exception as exc:
                         outcome = type(exc).__name__
                     payload["market_results"].setdefault(sid, {})[kind] = outcome
@@ -455,17 +470,13 @@ def browser_source(dated_fixtures=(), now=None):
                 if item.get("euro_live") and item.get("asian_open") and item.get("asian_live")
                 and item.get("ou_open") and item.get("ou_live")
             )
-            # Diagnostic: check whether a genuine 1x2 detail page is reachable.
+            # Reachability-only diagnostic when there are no scheduled candidates.
             eid = (payload.get("oddsExample") or {}).get("id")
             if not candidates and eid and str(eid).isdigit():
                 try:
-                    page.goto("https://1x2.titan007.com/Oddslist/" + str(eid) + ".htm",
-                              wait_until="domcontentloaded", timeout=16000)
-                    row = page.locator("tr").filter(has_text=re.compile("Crow", re.I)).first
-                    payload["euroProbe"] = {
-                        "id": eid, "title": page.title()[:120],
-                        "crow_cells": [x.strip() for x in row.locator("td").all_text_contents()][:16],
-                    }
+                    response = page.goto("https://1x2.titan007.com/Oddslist/" + str(eid) + ".htm",
+                                         wait_until="domcontentloaded", timeout=16000)
+                    payload["euroProbe"] = {"id": eid, "http_status": response.status if response else None}
                 except Exception as detail_exc:
                     payload["euroProbe"] = {"id": eid, "error": type(detail_exc).__name__ + ": " + str(detail_exc)[:120]}
         finally:
