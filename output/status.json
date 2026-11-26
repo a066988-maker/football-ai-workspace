@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-11-26T20:03:38+08:00",
+  "updated_at": "2026-11-26T20:09:36+08:00",
   "status": "insufficient_verified_odds",
   "window_start": "2026-11-26T16:00+08:00",
   "window_end": "2026-11-27T08:00+08:00",
@@ -378,25 +378,25 @@
       "id": "3113964",
       "entries": 3,
       "first": {
-        "ID": "3_1_0_2",
-        "stateInfo": "<span class=\"blue\">中</span>",
+        "ID": "3_1_0_3",
+        "stateInfo": "<span class=\"red\">47</span>",
         "homeScore": 1,
         "guestScore": 0,
         "showScore": "1:0",
-        "oddsID_h": "81850038",
+        "oddsID_h": "81850109",
         "homeOdds_f": "0.72",
         "letgoal_f": "<font color='red'>*</font>平/半",
         "guestOdds_f": "0.98",
-        "homeOdds": "0.72",
+        "homeOdds": "0.71",
         "letgoal": "<font color='red'>*</font>平/半",
-        "guestOdds": "0.98",
-        "oddsID_t": "81850039",
+        "guestOdds": "0.99",
+        "oddsID_t": "81850110",
         "upOdds_f": "0.88",
         "totalScore_f": "2.5",
         "downOdds_f": "0.82",
-        "upOdds": "0.88",
+        "upOdds": "0.96",
         "totalScore": "2.5",
-        "downOdds": "0.82"
+        "downOdds": "0.74"
       }
     },
     "euro_probe": null,
@@ -446,7 +446,13 @@
     },
     "detail_pages_requested": 24
   },
-  "aiscore_backup": {},
+  "aiscore_backup": {
+    "league_response": {
+      "http": 403,
+      "url": "https://m.aiscore.com/tournament-uefa-europa-league/2jr7owi6es1q0em/matches?__cf_chl_rt_tk=vUPHFSf7WzTWdxq4xoAvZs2TR7TwfEUof7iPHgJyHyQ-1795695021-1.0.1.1-wuIFjFnXmG916BYlWuAo.Kahgnz8ATyZnHKA1v2WKls",
+      "title": "Just a moment..."
+    }
+  },
   "feed_fixture_count": 238,
   "feed_market_count": 112,
   "window_fixture_count": 196,
@@ -455,13 +461,13 @@
   "message": "Fewer than three scheduled matches have all opening/current Titan odds; AI analysis not run.",
   "quality": {
     "status": "blocked",
-    "checked_at": "2026-11-26T20:04:23+08:00",
+    "checked_at": "2026-11-26T20:10:21+08:00",
     "ai_attempts": 0,
     "repairs": 0,
     "errors": 1,
     "publish_allowed": false
   },
-  "github_run_id": "45816009276",
+  "github_run_id": "45817007396",
   "telegram": "not_configured",
-  "finished_at": "2026-11-26T12:04:23.875841+00:00"
+  "finished_at": "2026-11-26T12:10:21.875908+00:00"
 }
