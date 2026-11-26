@@ -19,7 +19,7 @@ NAMES = {
     "TSG Hoffenheim": "霍芬海姆", "Sturm Graz": "格拉茨风暴",
     "Lyon": "里昂", "Lillestrom": "利勒斯特罗姆",
 }
-LINK = re.compile(r"/match-[a-z0-9-]+/([a-z0-9]{12,22})/h2h")
+LINK = re.compile(r"/match-[a-z0-9-]+/([a-z0-9]{12,22})(?:/h2h)?")
 BOOK = re.compile(r"https://img[0-9]\.aiscore\.com/other/([0-9a-f]{20})\.png")
 TABS = {"eu": "1 X 2", "ah": "Asian Handicap", "ou": "Total Goals"}
 
@@ -110,17 +110,25 @@ def collect_backup(browser, start, end, now):
             response = page.goto(BASE + address, wait_until="domcontentloaded", timeout=12000)
             if not response or not response.ok:
                 continue
-            page.locator('a[itemprop="url"][href*="/match-"]').first.wait_for(timeout=7000)
-            found = page.locator('a[itemprop="url"][href*="/match-"]').evaluate_all(r"""els => els.map(a => [
-              a.getAttribute('href'), a.innerText.trim().split(/\n+/).map(s=>s.trim()).filter(Boolean)])""")
-            dates = {d.strftime("%Y/%m/%d") for d in (start.date(), end.date())}
+            selector = 'a[itemprop="url"][href*="/match-"]'
+            wanted = {d.strftime("%Y%m%d") for d in (start.date(), end.date())}
+            page.locator(selector).first.wait_for(state="attached", timeout=7000)
+            found = page.locator(selector).evaluate_all("""els => els.map(a => {
+                const value = key => a.querySelector('[itemprop="'+key+'"]')?.textContent.trim() || '';
+                return [a.getAttribute('href'), value('startDate'), value('homeTeam'), value('awayTeam')];
+            })""")
             candidates = {}
-            for path, names in found:
-                hit = LINK.fullmatch(path)
-                if hit and len(names) >= 3 and names[0] in dates and names[1] in NAMES and names[2] in NAMES:
-                    candidates.setdefault(hit[1], (path, (names[1], names[2])))
+            dates_seen = {}
+            for path, date, home, away in found:
+                date = re.sub(r"[^0-9]", "", date)[:8]
+                dates_seen[date] = dates_seen.get(date, 0) + 1
+                hit = LINK.fullmatch(path or "")
+                if hit and date in wanted and home in NAMES and away in NAMES:
+                    candidates.setdefault(hit[1], (path, (home, away)))
+            diag["league_listing"] = {"rows": len(found), "dated_candidates": len(candidates),
+                                      "dates_seen": dict(sorted(dates_seen.items())[-12:])}
             for mid, (path, names) in list(candidates.items())[:8]:
-                url = BASE + path.rsplit("/", 1)[0] + "/odds"
+                url = BASE + path.removesuffix("/h2h") + "/odds"
                 try:
                     response = page.goto(url, wait_until="domcontentloaded", timeout=10000)
                     if not response or not response.ok or page.url != url:
