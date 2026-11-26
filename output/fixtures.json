@@ -11,7 +11,7 @@
     "乌兹甲": 1,
     "乌干女超": 2,
     "乌干超": 2,
-    "亚冠联2": 6,
+    "亚冠联2": 3,
     "以丙": 6,
     "以乙北": 1,
     "以乙南": 1,
@@ -26,7 +26,6 @@
     "印尼丁": 5,
     "印尼超": 1,
     "印西隆杯": 1,
-    "叙利亚甲": 1,
     "喀麦女联": 1,
     "国际友谊": 4,
     "坦桑超": 1,
@@ -86,8 +85,7 @@
     "阿后备": 2,
     "阿图什杯": 2,
     "阿塞甲": 1,
-    "阿美甲": 2,
-    "黑山U19": 1
+    "阿美甲": 2
   },
   "fixtures": [
     {
@@ -448,46 +446,6 @@
       "kickoff": "2026-11-26T20:00+08:00",
       "state": 0,
       "source_url": "https://bf.titan007.com/detail/3100555.htm",
-      "has_complete_odds": false
-    },
-    {
-      "id": "3116643",
-      "league": "黑山U19",
-      "home": "KOM朴高利卡U19",
-      "away": "德锡U19",
-      "kickoff": "2026-11-26T20:00+08:00",
-      "state": 0,
-      "source_url": "https://zq.titan007.com/analysis/3116643cn.htm",
-      "has_complete_odds": false
-    },
-    {
-      "id": "3069054",
-      "league": "亚冠联2",
-      "home": "巴吞联",
-      "away": "狮城水手",
-      "kickoff": "2026-11-26T20:15+08:00",
-      "state": 0,
-      "source_url": "https://zq.titan007.com/analysis/3069054cn.htm",
-      "has_complete_odds": false
-    },
-    {
-      "id": "3069055",
-      "league": "亚冠联2",
-      "home": "和富大埔",
-      "away": "阿德莱德联",
-      "kickoff": "2026-11-26T20:15+08:00",
-      "state": 0,
-      "source_url": "https://zq.titan007.com/analysis/3069055cn.htm",
-      "has_complete_odds": false
-    },
-    {
-      "id": "3069067",
-      "league": "亚冠联2",
-      "home": "柴桢",
-      "away": "町田泽维亚",
-      "kickoff": "2026-11-26T20:15+08:00",
-      "state": 0,
-      "source_url": "https://zq.titan007.com/analysis/3069067cn.htm",
       "has_complete_odds": false
     },
     {
@@ -1078,16 +1036,6 @@
       "kickoff": "2026-11-26T23:00+08:00",
       "state": 0,
       "source_url": "https://zq.titan007.com/analysis/3114700cn.htm",
-      "has_complete_odds": false
-    },
-    {
-      "id": "3114953",
-      "league": "叙利亚甲",
-      "home": "特舒利恩",
-      "away": "霍姆斯阿尔菲达",
-      "kickoff": "2026-11-26T23:00+08:00",
-      "state": 0,
-      "source_url": "https://zq.titan007.com/analysis/3114953cn.htm",
       "has_complete_odds": false
     },
     {
