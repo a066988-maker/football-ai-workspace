@@ -691,7 +691,10 @@ def collect():
                     if dt.datetime.fromisoformat(m["kickoff"]) > now + dt.timedelta(minutes=5)]
         ranked = sorted(upcoming, key=selection_rank)[:4]
         provider = "Titan007 live public football feed"
-        # The hosted runner received an access challenge. Retain the adapter\n        # for a permitted source environment, but do not retry that challenge.\n        report["aiscore_backup_state"] = "disabled_after_hosted_access_challenge"\n        if os.environ.get("ENABLE_AISCORE_BACKUP") == "1" and len(ranked) < 4 and any("欧联" in m["league"] or "欧罗巴" in m["league"] for m in window):
+        # The hosted runner received an access challenge. Retain the adapter
+        # for a permitted source environment, but do not retry that challenge.
+        report["aiscore_backup_state"] = "disabled_after_hosted_access_challenge"
+        if os.environ.get("ENABLE_AISCORE_BACKUP") == "1" and len(ranked) < 4 and any("欧联" in m["league"] or "欧罗巴" in m["league"] for m in window):
             try:
                 from aiscore_backup import run
                 backup, diagnostics = run(start, end, dt.datetime.now(ZONE))
