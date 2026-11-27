@@ -48,9 +48,15 @@ jobs:
                       result["http"] = response.status if response else None
                       if result["http"] != 200:
                           return result
-                      result["expected_title"] = bool(re.search(r"曼彻斯特联|曼聯",page.title())) and bool(re.search(r"布伦特福德|賓福特",page.title()))
-                      if not result["expected_title"]:
-                          return result
+                      page.wait_for_timeout(1200)
+                      visible = page.locator("body").inner_text(timeout=5000)
+                      result["title"] = page.title()[:130]
+                      names = r"曼彻斯特联|曼聯|曼联|Manchester United", r"布伦特福德|賓福特|Brentford"
+                      result["fixture_visible"] = all(re.search(x, visible) for x in names)
+                      guest = page.get_by_text("暂不登录", exact=True)
+                      if result["fixture_visible"] and guest.count() and guest.first.is_visible():
+                          guest.first.click(timeout=3000)
+                      result["guest_decline_used"] = bool(result["fixture_visible"] and guest.count())
                       for phase in ("page_ready", "after_5s"):
                           _, diag = collect.inspect_detail_row(page, kind)
                           result[phase] = diag
