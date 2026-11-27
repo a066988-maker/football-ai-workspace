@@ -1,4 +1,4 @@
-name: One-match public Titan diagnostic
+name: One-match public NowScore diagnostic
 on:
   push:
     branches: [diagnostics/titan-same-match-20261128]
@@ -22,9 +22,9 @@ jobs:
           from playwright.sync_api import sync_playwright, TimeoutError
           import collect
           urls = {
-              "euro": "https://1x2.titan007.com/oddslist/3003966.htm",
-              "asian": "https://vip.titan007.com/AsianOdds_n.aspx?id=3003966&l=0",
-              "ou": "https://vip.titan007.com/OverDown_n.aspx?id=3003966&l=0",
+              "euro": "https://m.zhiyunsports.com/1x2/3003966.htm",
+              "asian": "https://m.zhiyunsports.com/Handicap/3003966.htm",
+              "ou": "https://m.zhiyunsports.com/OverUnder/3003966.htm",
           }
           def check(item):
               kind, url = item
@@ -36,11 +36,11 @@ jobs:
                       response_types, request_errors = Counter(), Counter()
                       def mark_response(r):
                           host = urlparse(r.url).hostname or ""
-                          if host.endswith(".titan007.com"):
+                          if host.endswith(".zhiyunsports.com"):
                               response_types[(host, r.request.resource_type, r.status)] += 1
                       def mark_error(r):
                           host = urlparse(r.url).hostname or ""
-                          if host.endswith(".titan007.com"):
+                          if host.endswith(".zhiyunsports.com"):
                               request_errors[(host, r.resource_type, r.failure)] += 1
                       page.on("response", mark_response)
                       page.on("requestfailed", mark_error)
@@ -75,7 +75,7 @@ jobs:
                                   if (!visible(row)) continue;
                                   counts.visible_rows++;
                                   const cells = [...row.querySelectorAll(':scope > td')].filter(visible).map(cell => cell.innerText.trim());
-                                  if (cells.filter(t => /^\\d{1,2}\\.\\d{1,4}$/.test(t)).length >= 3) counts.price_shaped_rows++;
+                                  if (cells.join(' ').split(/\s+/).filter(t => /^\\d{1,2}\\.\\d{1,4}$/.test(t)).length >= 3) counts.price_shaped_rows++;
                               }
                               return counts;
                           }""")
