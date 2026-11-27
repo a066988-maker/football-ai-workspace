@@ -108,14 +108,16 @@ function drawPoster(d){
 }
 function makeCopy(d){
   const h=d.matches[0].home+'迎战'+d.matches[0].away+'，今晚的盘口值得细看';
-  return h+'\n\n'+(d.analysis_engine==='rules_fallback'?'【盘口规则版·非AI生成】\n\n':'')+d.matches.map((m,i)=>{
+  const opening='先看盘口变化，再谈比赛剧本。临场水位可能调整，以下仅作赛前交流。';
+  const source=String(d.source||'').startsWith('AiScore')?'盘口来源：AiScore（球探备用）\n':'';
+  return h+'\n\n'+(d.analysis_engine==='rules_fallback'?'【盘口规则版·非AI生成】\n':'')+opening+'\n\n'+d.matches.map((m,i)=>{
     return '【'+(i+1)+'｜'+m.league+'】'+m.home+' vs '+m.away+'\n开球：'+m.kickoff.slice(5,16).replace('T',' ')+'\n'+m.analysis+'\n趋势：'+m.trend+'\n比分：'+m.scores.join(' / ');
-  }).join('\n\n')+'\n\n仅供赛事交流，不构成投注建议，请理性判断。\n#足球 #足球分析 #赛事前瞻';
+  }).join('\n\n')+'\n\n'+source+'仅供赛事交流，不构成投注建议，请理性判断。\n#足球 #足球分析 #赛事前瞻';
 }
 function make(){
   try{
     const d=loadJson(),errors=validate(d);
-    if(errors.length){note(errors.join('\n'));return}
+    if(errors.length){E('copy').value='';note(errors.join('\n'));return}
     drawPoster(d);E('copy').value=makeCopy(d);note('格式檢查通過；可編輯文案、下載 PNG。資料真實性以每日來源狀態為準。');
     localStorage.setItem(STORE,JSON.stringify({date:currentDay,source:E('data').value,copy:E('copy').value}));
   }catch(ex){note('無法產生：'+ex.message)}
@@ -141,7 +143,32 @@ function renderEditors(){
     item.appendChild(grid);root.appendChild(item);
   });
 }
-async function readRemote(path){const url='https://raw.githubusercontent.com/a066988-maker/football-ai-workspace/main/'+path+'?v='+Date.now();const r=await fetch(url,{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);return r.json()}
+const repo='a066988-maker/football-ai-workspace';
+async function fetchRemote(path, ref='main'){
+  const r=await fetch('https://raw.githubusercontent.com/'+repo+'/'+ref+'/'+path+'?v='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('HTTP '+r.status);
+  return r;
+}
+async function readRemote(path, ref){return (await fetchRemote(path,ref)).json()}
+function canUseAutomaticAssets(status, slateDay=taipeiSlateDate()){
+  return ['analysis_ready','analysis_ready_rules'].includes(status?.status) &&
+    status?.quality?.publish_allowed===true && (status.window_start||'').slice(0,10)===slateDay;
+}
+async function automaticAsset(name){
+  // Resolve main exactly once: status, QA and file must be from one commit.
+  const head=await fetch('https://api.github.com/repos/'+repo+'/git/ref/heads/main',{cache:'no-store'});
+  if(!head.ok)throw Error('暫時無法確認最新版本（HTTP '+head.status+'）');
+  const ref=(await head.json()).object?.sha;
+  if(!/^[0-9a-f]{40}$/.test(ref||''))throw Error('無法確認最新版本');
+  const status=await readRemote('output/status.json',ref);
+  if(!canUseAutomaticAssets(status) || !status.assets?.includes(name))throw Error('目前時段尚無通過驗收的自動圖文');
+  const qa=await readRemote('output/qa_report.json',ref);
+  if(!status.github_run_id || qa.github_run_id!==status.github_run_id || qa.status!=='passed' || qa.publish_allowed!==true)
+    throw Error('驗收報告與自動圖文不符');
+  const response=await fetchRemote('output/'+name,ref);
+  if(!canUseAutomaticAssets(status))throw Error('賽程時段已切換，請重新整理');
+  return response;
+}
 function taipeiSlateDate(now=new Date()){
   // Match the backend: before 08:00 Taipei, keep the previous evening's slate.
   const shifted=new Date(now.getTime()-8*60*60*1000);
@@ -192,7 +219,7 @@ async function refresh(){
       const rows=(calendar.fixtures||[]).map(m=>m.kickoff.slice(5,16).replace('T',' ')+' '+m.league+'｜'+m.home+' vs '+m.away+(m.has_complete_odds?' ✓':' 盘未齐'));
       E('fixtures-list').textContent='联赛场数：'+(summary||'—')+'\n\n'+(rows.join('\n')||'该时段暂无已取得的赛事');
     }catch(ex){E('fixtures-list').textContent='完整賽程尚未發布：'+ex.message;E('today-slate').textContent='今日賽程暫時讀取失敗'}
-    if(['analysis_ready','analysis_ready_rules'].includes(status.status) && status.quality?.publish_allowed===true && fresh){
+    if(canUseAutomaticAssets(status,slateDay)){
       const data=await readRemote('output/analysis.json');
       if(!data.matches||!data.matches.length)throw Error('分析檔案沒有賽事');
       const cached=JSON.parse(localStorage.getItem(STORE)||'null');
@@ -214,15 +241,13 @@ function download(name,blob){
 E('refresh').onclick=refresh;E('make').onclick=make;
 E('auto-png').onclick=async()=>{
   try{
-    const r=await fetch('https://raw.githubusercontent.com/a066988-maker/football-ai-workspace/main/output/poster.png?t='+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw Error('尚無已驗證分析圖片');
+    const r=await automaticAsset('poster.png');
     download('football-daily-poster.png',await r.blob());
   }catch(ex){note('自動圖片無法下載：'+ex.message)}
 };
 E('auto-copy').onclick=async()=>{
   try{
-    const r=await fetch('https://raw.githubusercontent.com/a066988-maker/football-ai-workspace/main/output/xiaohongshu.txt?t='+Date.now(),{cache:'no-store'});
-    if(!r.ok)throw Error('尚無已驗證分析文案');
+    const r=await automaticAsset('xiaohongshu.txt');
     E('copy').value=await r.text();
     note('已讀取自動產出的當日文案，可自行修改後複製。');
   }catch(ex){note('自動文案無法讀取：'+ex.message)}
@@ -232,7 +257,7 @@ E('file').onchange=async ev=>{const f=ev.target.files?.[0];if(!f)return;E('data'
 E('sample').onclick=()=>{E('data').value=JSON.stringify({source:'',verified_at:'',matches:[{id:'',league:'',home:'',away:'',kickoff:'',source_url:'',odds_checked_at:'',asian_open:[],asian_live:[],euro_live:[],ou_open:[],ou_live:[],analysis:'',trend:'大 2.5',scores:['2-1','1-2','1-1']}]},null,2);renderEditors()};
 E('save').onclick=()=>download('football-matches.json',new Blob([E('data').value],{type:'application/json'}));
 E('png').onclick=()=>canvas.toBlob(b=>{if(b)download('football-poster.png',b)},'image/png');
-E('copytext').onclick=async()=>{try{await navigator.clipboard.writeText(E('copy').value);note('文案已複製')}catch{E('copy').select();note('請手動複製已選取的文案')}};
+E('copytext').onclick=async()=>{if(!E('copy').value.trim()){note('目前沒有可複製的文案');return}try{await navigator.clipboard.writeText(E('copy').value);note('文案已複製')}catch{E('copy').select();note('請手動複製已選取的文案')}};
 E('copy').oninput=()=>{try{const x=JSON.parse(localStorage.getItem(STORE)||'null');if(x){x.copy=E('copy').value;localStorage.setItem(STORE,JSON.stringify(x))}}catch{}};
 E('data').onchange=()=>{renderEditors();make()};
 refresh();
