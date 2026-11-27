@@ -80,6 +80,19 @@ class QualityInputTests(unittest.TestCase):
         )))
 
 
+class FullOddsSOPTests(unittest.TestCase):
+    def test_four_matches_and_all_provenanced_openers_are_required(self):
+        record = {"euro_open": [1.70, 3.50, 4.25], "odds_provider": "AiScore", "odds_book_id": "a" * 20}
+        self.assertEqual(quality.full_odds_sop_issues([record] * 4), [])
+        self.assertTrue(quality.full_odds_sop_issues([record] * 3))
+        no_open = dict(record, euro_open=None)
+        self.assertTrue(any("1X2" in s for s in quality.full_odds_sop_issues([no_open] * 4)))
+        no_book = dict(record, odds_book_id=None)
+        self.assertTrue(any("bookmaker" in s for s in quality.full_odds_sop_issues([no_book] * 4)))
+        other_provider = dict(record, odds_provider="Titan007")
+        self.assertTrue(any("bookmaker" in s for s in quality.full_odds_sop_issues([other_provider] * 4)))
+
+
 class OutputAuditTests(unittest.TestCase):
     def setUp(self):
         self.rows = [analyzed_fixture(str(2906701 + i)) for i in range(3)]

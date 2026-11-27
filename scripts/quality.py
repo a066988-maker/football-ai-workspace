@@ -82,6 +82,29 @@ def safe_issues(data, originals):
     return issues
 
 
+def full_odds_sop_issues(matches):
+    """Publish four upcoming games only with actual opening paired to current."""
+    if len(matches) != 4:
+        return ["Daily production requires exactly four matches"]
+    issues = []
+    for i, match in enumerate(matches, 1):
+        if not isinstance(match, dict):
+            issues.append(f"match {i}: missing market record")
+            continue
+        opening = match.get("euro_open")
+        if not isinstance(opening, list) or len(opening) != 3 or not all(
+            type(price) in (int, float) and 1.01 <= price <= 500 for price in opening
+        ):
+            issues.append(f"match {i}: missing source-labelled opening 1X2 prices")
+        # Only the existing AiScore adapter proves matching book identity for
+        # both columns in all three markets. Titan's numeric triples do not.
+        if match.get("odds_provider") != "AiScore" or not re.fullmatch(
+            r"[0-9a-f]{20}", str(match.get("odds_book_id", ""))
+        ):
+            issues.append(f"match {i}: opening/current bookmaker provenance unverified")
+    return issues
+
+
 def input_issues(source, status, now=None, window=None):
     """Check scope, traceability and freshness before spending a Gemini call."""
     import collect

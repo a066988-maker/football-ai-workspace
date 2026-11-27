@@ -39,6 +39,19 @@ class DetailDiagnosticsTests(unittest.TestCase):
                          ("first_row_hidden", 2, 4))
         hidden.locator.assert_not_called()
 
+    def test_only_counts_later_visibility_and_never_reads_those_cells(self):
+        page, hidden = page_stub(preferred=3, visible=False)
+        preferred = page.locator("tr").filter.return_value
+        second, third = Mock(), Mock()
+        second.is_visible.return_value = True
+        third.is_visible.return_value = False
+        preferred.nth.side_effect = lambda i: [hidden, second, third][i]
+        prices, info = collect.inspect_detail_row(page, "ou")
+        self.assertIsNone(prices)
+        self.assertEqual((info["rows_visibility_checked"], info["later_visible_rows"]), (3, 1))
+        for row in (hidden, second, third):
+            row.locator.assert_not_called()
+
     def test_visible_parse_rejection_and_success_are_distinct(self):
         page, _ = page_stub(fallback=4)
         with patch.object(collect, "detail_market", side_effect=[None, {"euro_live": [1.55, 3.2, 4.1]}]) as parse:

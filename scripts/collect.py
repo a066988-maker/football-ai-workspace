@@ -351,7 +351,13 @@ def inspect_detail_row(page, kind):
     row = preferred.first if preferred_count else fallback.first
     diag["selector"] = "preferred" if preferred_count else "fallback"
     if not row.is_visible():
-        return None, {**diag, "outcome": "first_row_hidden"}
+        # Diagnose the repeated hidden-first result without reading hidden cells,
+        # treating another row as verified, or expanding any network access.
+        chosen, count = (preferred, preferred_count) if preferred_count else (fallback, fallback_count)
+        sample_size = min(count, 6)
+        later_visible = sum(chosen.nth(i).is_visible() is True for i in range(1, sample_size))
+        return None, {**diag, "outcome": "first_row_hidden", "rows_visibility_checked": sample_size,
+                      "later_visible_rows": later_visible}
     cells = [v.strip() for v in row.locator("td").all_inner_texts()]
     parsed = detail_market(kind, cells)
     return parsed, {**diag, "cell_count": len(cells),

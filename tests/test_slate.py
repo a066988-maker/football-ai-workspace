@@ -70,6 +70,7 @@ class SlateTests(unittest.TestCase):
             (out / "poster.png").touch()
             (out / "xiaohongshu.txt").touch()
             with patch.object(daily, "OUT", out), \
+                 patch.object(quality, "full_odds_sop_issues", return_value=[]), \
                  patch.object(quality, "safe_issues", return_value=[]), \
                  patch.object(quality, "asset_issues", return_value=[]), \
                  patch.object(daily.dt, "datetime", wraps=dt.datetime) as clock, \

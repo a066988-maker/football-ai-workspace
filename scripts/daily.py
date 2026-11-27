@@ -41,6 +41,8 @@ def already_complete_slate(now=None):
             return False
         if state["status"] == "analysis_ready_rules" and data.get("analysis_engine") != "rules_fallback":
             return False
+        if quality.full_odds_sop_issues(data.get("matches", [])):
+            return False
         if quality.safe_issues(data, data.get("matches", [])):
             return False
         if quality.asset_issues(data, copy, poster):
@@ -78,6 +80,8 @@ def main():
         try:
             source = json.loads(analyze.INPUT.read_text(encoding="utf-8"))
             failures = quality.input_issues(source, report, window=slate_window(now))
+            if not failures:
+                failures = quality.full_odds_sop_issues(source["matches"])
             if failures:
                 raise ValueError("; ".join(failures[:8]))
             checks["fixture_source"] = "passed"
