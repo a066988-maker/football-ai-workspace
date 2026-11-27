@@ -1,0 +1,56 @@
+name: One-match public Titan diagnostic
+on:
+  push:
+    branches: [diagnostics/titan-same-match-20261128]
+    paths: ['.github/workflows/titan-same-match.yml']
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - run: python -m pip install --quiet playwright
+      - name: Compare public kickoff pages in the hosted runner
+        run: |
+          PYTHONPATH=scripts python - <<'PY'
+          from concurrent.futures import ThreadPoolExecutor
+          import json, re, shutil
+          from playwright.sync_api import sync_playwright, TimeoutError
+          import collect
+          urls = {
+              "euro": "https://1x2.titan007.com/oddslist/3003966.htm",
+              "asian": "https://vip.titan007.com/AsianOdds_n.aspx?id=3003966&l=0",
+              "ou": "https://vip.titan007.com/OverDown_n.aspx?id=3003966&l=0",
+          }
+          def check(item):
+              kind, url = item
+              result = {"kind": kind, "fixture": "3003966"}
+              with sync_playwright() as p:
+                  browser = p.chromium.launch(executable_path=shutil.which("google-chrome") or shutil.which("chromium"), args=["--no-sandbox"])
+                  try:
+                      page = browser.new_page()
+                      response = page.goto(url, wait_until="domcontentloaded", timeout=15000)
+                      result["http"] = response.status if response else None
+                      if result["http"] != 200:
+                          return result
+                      result["expected_title"] = bool(re.search(r"曼彻斯特联|曼聯",page.title())) and bool(re.search(r"布伦特福德|賓福特",page.title()))
+                      if not result["expected_title"]:
+                          return result
+                      for phase in ("page_ready", "after_5s"):
+                          _, diag = collect.inspect_detail_row(page, kind)
+                          result[phase] = diag
+                          if phase == "page_ready":
+                              if diag["outcome"] == "registration_wall":
+                                  break
+                              page.wait_for_timeout(5000)
+                  except TimeoutError:
+                      result["error"] = "navigation_or_render_timeout"
+                  finally:
+                      browser.close()
+              return result
+          with ThreadPoolExecutor(max_workers=3) as workers:
+              for outcome in workers.map(check, urls.items()):
+                  print(json.dumps(outcome, ensure_ascii=False))
+          PY
