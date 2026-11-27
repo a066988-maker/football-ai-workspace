@@ -1,65 +1,65 @@
 {
-  "updated_at": "2026-11-27T07:19:15+08:00",
+  "updated_at": "2026-11-27T09:14:00+08:00",
   "status": "insufficient_verified_odds",
-  "window_start": "2026-11-26T16:00+08:00",
-  "window_end": "2026-11-27T08:00+08:00",
+  "window_start": "2026-11-27T16:00+08:00",
+  "window_end": "2026-11-28T08:00+08:00",
   "source": "https://bf.titan007.com/football/",
   "source_note": "Titan007 dated football schedule plus verified public markets when available.",
   "direct_error": "RemoteDisconnected: Remote end closed connection without response",
   "dated_schedule": {
-    "2026-11-26": "195 eligible rows",
-    "2026-11-27": "0 eligible rows"
+    "2026-11-27": "381 eligible rows",
+    "2026-11-28": "0 eligible rows"
   },
   "collection_method": "titan_dated_and_live",
   "browser_diagnostics": {
     "title": "足球比分_足球直播_足球比分直播-新球体育-球探体育",
     "homepage_error": null,
-    "dated_candidates": 195,
+    "dated_candidates": 381,
     "homepage_candidates": 0,
-    "browser_rows": 231,
+    "browser_rows": 234,
     "browser_market_arrays": 0,
     "schedule_sample": [
       [
-        "3114426",
-        "#56c54e",
-        "智利乙附",
-        "智利乙附",
-        "",
-        "圣地亚哥漫游者",
-        "雲達拿斯",
-        "",
-        "雷科莱塔体育",
-        "雷科萊塔體育",
-        "",
-        "06:00",
-        "2026,10,27,07,05,15",
-        "3",
-        "0",
-        "2",
-        "0",
-        "2",
-        "0",
-        "0"
-      ],
-      [
-        "3116401",
+        "3116402",
         "#1199BB",
         "尼拉甲春",
         "尼拉甲春",
         "",
-        "哈拉帕城市",
-        "幕尼西波爾哈拉帕",
+        "迪利安格恩",
+        "迪利安格恩",
         "",
-        "圣马科斯",
-        "聖馬科斯",
+        "马塔加尔帕FC",
+        "馬塔加爾帕FC",
         "",
-        "06:00",
-        "2026,10,27,07,01,58",
+        "08:00",
+        "2026,10,27,09,06,57",
+        "3",
         "3",
         "0",
+        "3",
+        "0",
+        "0",
+        "0"
+      ],
+      [
+        "3112399",
+        "#CC9988",
+        "乌拉杯",
+        "烏拉盃",
+        "",
+        "图尔克<font color=#880000>(中)</font>",
+        "蒙特維多城圖爾克<font color=#880000>(中)</font>",
+        "",
+        "乌拉圭民族",
+        "蒙特維多國民隊",
+        "",
+        "08:30",
+        "2026,10,27,08,29,37",
         "1",
         "0",
-        "1",
+        "0",
+        "",
+        "",
         "0",
         "0"
       ]
@@ -68,130 +68,19 @@
       {
         "length": 69,
         "fields": [
-          "3116402",
-          "#1199BB",
-          "尼拉甲春",
-          "尼拉甲春",
+          "3116921",
+          "#B5A152",
+          "日地区联",
+          "日地區聯",
           "",
-          "迪利安格恩",
-          "迪利安格恩",
+          "奥纳加钴矿石<font color=#880000>(中)</font>",
+          "奥纳加钴矿石<font color=#880000>(中)</font>",
           "",
-          "马塔加尔帕FC",
-          "馬塔加爾帕FC",
+          "岳南山顶",
+          "嶽南山顶",
           "",
-          "08:00",
-          "2026,10,27,08,00,00",
-          "0",
-          "0",
-          "0",
-          "",
-          "",
-          "0",
-          "0",
-          "0",
-          "0",
-          "春3",
-          "春10",
-          "1",
-          "0",
-          "",
-          "",
-          "True",
-          "1.75",
-          "",
-          "/cn/SubLeague.aspx?SclassID=1586"
-        ]
-      },
-      {
-        "length": 69,
-        "fields": [
-          "3112399",
-          "#CC9988",
-          "乌拉杯",
-          "烏拉盃",
-          "",
-          "图尔克<font color=#880000>(中)</font>",
-          "蒙特維多城圖爾克<font color=#880000>(中)</font>",
-          "",
-          "乌拉圭民族",
-          "蒙特維多國民隊",
-          "",
-          "08:30",
-          "2026,10,27,08,30,00",
-          "0",
-          "0",
-          "0",
-          "",
-          "",
-          "0",
-          "0",
-          "0",
-          "0",
-          "乌拉甲秋2",
-          "乌拉甲秋3",
-          "0",
-          "0",
-          "",
-          "",
-          "True",
-          "-0.25",
-          "",
-          "/cn/CupMatch.aspx?SclassID=2383"
-        ]
-      },
-      {
-        "length": 69,
-        "fields": [
-          "3116371",
-          "#098000",
-          "墨西联附",
-          "墨西聯附",
-          "",
-          "帕丘卡",
-          "帕丘卡",
-          "",
-          "瓜达拉哈拉",
-          "哥達拿查拉",
-          "",
-          "09:00",
-          "2026,10,27,09,00,00",
-          "0",
-          "0",
-          "0",
-          "",
-          "",
-          "0",
-          "0",
-          "0",
-          "0",
-          "秋8",
-          "秋1",
-          "1",
-          "2",
-          "",
-          "",
-          "True",
-          "0",
-          "",
-          "/cn/SubLeague.aspx?SclassID=140"
-        ]
-      },
-      {
-        "length": 69,
-        "fields": [
-          "3116794",
-          "#000120",
-          "萨尔甲",
-          "萨爾甲",
-          "",
-          "马泰索亚潘戈",
-          "馬泰索亞潘戈",
-          "",
-          "独立的圣维森特",
-          "獨立的聖維森特",
-          "",
-          "09:00",
-          "2026,10,27,09,00,00",
+          "09:45",
+          "2026,10,27,09,45,00",
           "0",
           "0",
           "0",
@@ -227,8 +116,8 @@
           "芝华士瓜达拉哈拉U21",
           "芝華士瓜達拉哈拉U21",
           "",
-          "09:00",
-          "2026,10,27,09,00,00",
+          "10:00",
+          "2026,10,27,10,00,00",
           "0",
           "0",
           "0",
@@ -246,43 +135,6 @@
           "",
           "True",
           "0",
-          "",
-          ""
-        ]
-      },
-      {
-        "length": 69,
-        "fields": [
-          "3116921",
-          "#B5A152",
-          "日地区联",
-          "日地區聯",
-          "",
-          "奥纳加钴矿石<font color=#880000>(中)</font>",
-          "奥纳加钴矿石<font color=#880000>(中)</font>",
-          "",
-          "岳南山顶",
-          "嶽南山顶",
-          "",
-          "09:45",
-          "2026,10,27,09,45,00",
-          "0",
-          "0",
-          "0",
-          "",
-          "",
-          "0",
-          "0",
-          "0",
-          "0",
-          "",
-          "",
-          "0",
-          "0",
-          "",
-          "",
-          "",
-          "",
           "",
           ""
         ]
@@ -327,6 +179,117 @@
       {
         "length": 69,
         "fields": [
+          "3113969",
+          "#9DA901",
+          "印班超",
+          "印班超",
+          "",
+          "班加罗尔联",
+          "班加羅爾聯",
+          "",
+          "麦格",
+          "麥格",
+          "",
+          "10:40",
+          "2026,10,27,10,40,00",
+          "0",
+          "0",
+          "0",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "0",
+          "",
+          "",
+          "0",
+          "0",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "length": 69,
+        "fields": [
+          "3116372",
+          "#098000",
+          "墨西联附",
+          "墨西聯附",
+          "",
+          "莱昂",
+          "萊昂",
+          "",
+          "蓝十字",
+          "藍十字",
+          "",
+          "11:10",
+          "2026,10,27,11,10,00",
+          "0",
+          "0",
+          "0",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "0",
+          "秋7",
+          "秋2",
+          "1",
+          "2",
+          "",
+          "",
+          "True",
+          "-0.25",
+          "",
+          "/cn/SubLeague.aspx?SclassID=140"
+        ]
+      },
+      {
+        "length": 69,
+        "fields": [
+          "3113967",
+          "#9DA901",
+          "印班超",
+          "印班超",
+          "",
+          "班加罗尔梦想联",
+          "班加羅爾夢想聯",
+          "",
+          "班加罗尔城",
+          "班加羅爾城",
+          "",
+          "13:25",
+          "2026,10,27,13,25,00",
+          "0",
+          "0",
+          "0",
+          "",
+          "",
+          "0",
+          "0",
+          "0",
+          "0",
+          "",
+          "",
+          "0",
+          "0",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
+      },
+      {
+        "length": 69,
+        "fields": [
           "3111913",
           "#00CCCC",
           "阿甲",
@@ -360,70 +323,257 @@
           "",
           "/cn/SubLeague.aspx?SclassID=2"
         ]
+      },
+      {
+        "length": 69,
+        "fields": [
+          "3116720",
+          "#CC6633",
+          "巴圣女联",
+          "巴聖女聯",
+          "",
+          "博塔福戈女足U20",
+          "博塔福戈女足U20",
+          "",
+          "SC国际女足U20",
+          "SC國際女足U20",
+          "",
+          "08:00",
+          "2026,10,26,09,09,34",
+          "-1",
+          "0",
+          "2",
+          "0",
+          "1",
+          "0",
+          "0",
+          "1",
+          "2",
+          "",
+          "",
+          "0",
+          "0",
+          "",
+          "",
+          "",
+          "",
+          "",
+          ""
+        ]
       }
     ],
     "pending_dom": [
       {
-        "id": "3116402",
-        "html": "<tr align=\"center\" id=\"tr1_3116402\" bgcolor=\"#FFFDF3\" index=\"11\" style=\"height:18px;display:\" odds=\"\"><td><input type=\"checkbox\" class=\"inp\" id=\"chk_3116402\"></td><td bgcolor=\"#1199BB\" style=\"color:white;\"><span><a href=\"http://zq.titan007.com/cn/SubLeague.aspx?SclassID=1586\" target=\"_blank\" title=\"进入资料库\"><font color=\"white\">尼拉甲春</font></a></span></td><td align=\"center\" id=\"mt_3116402\">08:00</td><td align=\"center\" id=\"time_3116402\" class=\"td_status\"></td><td align=\"right\"><span id=\"horder_3116402\"></span><a id=\"yellow1_3116402\"></a><a id=\"redcard1_3116402\"></a>迪利安格恩</td><td aloc=\"3116402\" onclick=\"showgoallist(3116402)\" class=\"td_score\" onmouseover=\"showdetail(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td align=\"left\">马塔加尔帕<a id=\"redcard2_3116402\"></a><a id=\"yellow2_3116402\"></a><span id=\"gorder_3116402\"></span></td><td style=\"cursor:pointer;\"><span class=\"td_half\" aloc=\"3116402\" onmouseover=\"showSBCorner(this,event)\" onmouseout=\"hiddenSbCorner()\" style=\"display:none\">-</span><br><span class=\"td_half\" aloc=\"3116402\" onmouseover=\"showpaulu(this,event,3)\" onmouseout=\"hiddendetail()\">-</span></td><td><a style=\"display:block;\" href=\"javascript:void(0)\" onclick=\"openFlash(3116402)\" title=\"现场分析\"><img src=\"images/ant/show_info.png\"></a></td><td class=\"icons2\"><span><a href=\"javascript:\" onclick=\"analysis(3116402)\" title=\"数据分析\">析</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"AsianOdds(3116402);\" title=\"亚让\">亚</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"TotalOdds(3116402);\" title=\"进球数\">大</a> <a href=\"javascript:EuropeOdds(3116402)\" title=\"胜平负\">欧</a><a href=\"javascript:advices(3116402)\" class=\"tjv\" title=\"赛事情报\">荐</a>&nbsp;</span><span id=\"badge_3116402\"><a href=\"//users.titan007.com/member/MatchVIP.aspx?id=3116402&amp;kind=1\" target=\"_blank\" class=\"newicons\"><img src=\"/images/VIP-icon.svg\" title=\"VIP\"></a></span></td><td><a href=\"javascript:addConcern(3116402,10);\" title=\"添加置顶\"><img src=\"image/unTop.png\"></a></td></tr>"
+        "id": "3116921",
+        "html": "<tr align=\"center\" id=\"tr1_3116921\" bgcolor=\"#F0F0F0\" index=\"5\" style=\"height:18px;display:none\" odds=\"\"><td><input type=\"checkbox\" class=\"inp\" id=\"chk_3116921\"></td><td bgcolor=\"#B5A152\" style=\"color:white;\"><span>日地区联</span></td><td align=\"center\" id=\"mt_3116921\">09:45</td><td align=\"center\" id=\"time_3116921\" class=\"td_status\"></td><td align=\"right\"><span id=\"horder_3116921\"></span><a id=\"yellow1_3116921\"></a><a id=\"redcard1_3116921\"></a>奥纳加钴矿石<font color=\"#880000\">(中)</font></td><td aloc=\"3116921\" onclick=\"showgoallist(3116921)\" class=\"td_score\" onmouseover=\"showdetail(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td align=\"left\">岳南山顶<a id=\"redcard2_3116921\"></a><a id=\"yellow2_3116921\"></a><span id=\"gorder_3116921\"></span></td><td style=\"cursor:pointer;\"><span class=\"td_half\" aloc=\"3116921\" onmouseover=\"showSBCorner(this,event)\" onmouseout=\"hiddenSbCorner()\" style=\"display:none\">-</span><br><span class=\"td_half\" aloc=\"3116921\" onmouseover=\"showpaulu(this,event,3)\" onmouseout=\"hiddendetail()\">-</span></td><td><a style=\"display:block;\" href=\"javascript:void(0)\" onclick=\"openFlash(3116921)\" title=\"现场分析\"><img src=\"images/ant/show_info.png\"></a></td><td class=\"icons2\"><span><a href=\"javascript:\" onclick=\"analysis(3116921)\" title=\"数据分析\">析</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"AsianOdds(3116921);\" title=\"亚让\">亚</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"TotalOdds(3116921);\" title=\"进球数\">大</a> <a href=\"javascript:EuropeOdds(3116921)\" title=\"胜平负\">欧</a>&nbsp;</span></td><td><a href=\"javascript:addConcern(3116921,10);\" title=\"添加置顶\"><img src=\"image/unTop.png\"></a></td></tr>"
       },
       {
-        "id": "3112399",
-        "html": "<tr align=\"center\" id=\"tr1_3112399\" bgcolor=\"#FFFDF3\" index=\"12\" style=\"height:18px;display:none\" odds=\"\"><td><input type=\"checkbox\" class=\"inp\" id=\"chk_3112399\"></td><td bgcolor=\"#CC9988\" style=\"color:white;\"><span><a href=\"http://zq.titan007.com/cn/CupMatch.aspx?SclassID=2383\" target=\"_blank\" title=\"进入资料库\"><font color=\"white\">乌拉杯</font></a></span></td><td align=\"center\" id=\"mt_3112399\">08:30</td><td align=\"center\" id=\"time_3112399\" class=\"td_status\"></td><td align=\"right\"><span id=\"horder_3112399\"></span><a id=\"yellow1_3112399\"></a><a id=\"redcard1_3112399\"></a>蒙特维多城图尔克<font color=\"#880000\">(中)</font></td><td aloc=\"3112399\" onclick=\"showgoallist(3112399)\" class=\"td_score\" onmouseover=\"showdetail(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td align=\"left\">蒙特维多国民队<a id=\"redcard2_3112399\"></a><a id=\"yellow2_3112399\"></a><span id=\"gorder_3112399\"></span></td><td style=\"cursor:pointer;\"><span class=\"td_half\" aloc=\"3112399\" onmouseover=\"showSBCorner(this,event)\" onmouseout=\"hiddenSbCorner()\" style=\"display:none\">-</span><br><span class=\"td_half\" aloc=\"3112399\" onmouseover=\"showpaulu(this,event,3)\" onmouseout=\"hiddendetail()\">-</span></td><td><a style=\"display:block;\" href=\"javascript:void(0)\" onclick=\"openFlash(3112399)\" title=\"现场分析\"><img src=\"images/ant/show_info.png\"></a></td><td class=\"icons2\"><span><a href=\"javascript:\" onclick=\"analysis(3112399)\" title=\"数据分析\">析</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"AsianOdds(3112399);\" title=\"亚让\">亚</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"TotalOdds(3112399);\" title=\"进球数\">大</a> <a href=\"javascript:EuropeOdds(3112399)\" title=\"胜平负\">欧</a><a href=\"javascript:advices(3112399)\" class=\"tjv\" title=\"赛事情报\">荐</a>&nbsp;</span></td><td><a href=\"javascript:addConcern(3112399,10);\" title=\"添加置顶\"><img src=\"image/unTop.png\"></a></td></tr>"
+        "id": "3116630",
+        "html": "<tr align=\"center\" id=\"tr1_3116630\" bgcolor=\"#FFFDF3\" index=\"6\" style=\"height:18px;display:none\" odds=\"\"><td><input type=\"checkbox\" class=\"inp\" id=\"chk_3116630\"></td><td bgcolor=\"#BEB9B9\" style=\"color:white;\"><span>墨西U21</span></td><td align=\"center\" id=\"mt_3116630\">10:00</td><td align=\"center\" id=\"time_3116630\" class=\"td_status\"></td><td align=\"right\"><span id=\"horder_3116630\"></span><a id=\"yellow1_3116630\"></a><a id=\"redcard1_3116630\"></a>华雷斯 U21</td><td aloc=\"3116630\" onclick=\"showgoallist(3116630)\" class=\"td_score\" onmouseover=\"showdetail(this,event,3)\" onmouseout=\"hiddendetail()\">-</td><td align=\"left\">芝华士瓜达拉哈拉 U21<a id=\"redcard2_3116630\"></a><a id=\"yellow2_3116630\"></a><span id=\"gorder_3116630\"></span></td><td style=\"cursor:pointer;\"><span class=\"td_half\" aloc=\"3116630\" onmouseover=\"showSBCorner(this,event)\" onmouseout=\"hiddenSbCorner()\" style=\"display:none\">-</span><br><span class=\"td_half\" aloc=\"3116630\" onmouseover=\"showpaulu(this,event,3)\" onmouseout=\"hiddendetail()\">-</span></td><td><a style=\"display:block;\" href=\"javascript:void(0)\" onclick=\"openFlash(3116630)\" title=\"现场分析\"><img src=\"images/ant/show_info.png\"></a></td><td class=\"icons2\"><span><a href=\"javascript:\" onclick=\"analysis(3116630)\" title=\"数据分析\">析</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"AsianOdds(3116630);\" title=\"亚让\">亚</a> <a style=\"cursor:pointer;\" href=\"javascript:\" onclick=\"TotalOdds(3116630);\" title=\"进球数\">大</a> <a href=\"javascript:EuropeOdds(3116630)\" title=\"胜平负\">欧</a>&nbsp;</span></td><td><a href=\"javascript:addConcern(3116630,10);\" title=\"添加置顶\"><img src=\"image/unTop.png\"></a></td></tr>"
       }
     ],
     "flash_type": "object",
-    "odds_group_count": 127,
+    "odds_group_count": 128,
     "odds_example": {
-      "id": "3114426",
+      "id": "3116402",
       "entries": 3,
       "first": {
-        "ID": "3_0_2_1",
-        "stateInfo": "<span class=\"red\">45</span>",
-        "homeScore": 0,
-        "guestScore": 2,
-        "showScore": "0:2",
-        "oddsID_h": "81862636",
-        "homeOdds_f": "0.89",
-        "letgoal_f": "半球",
-        "guestOdds_f": "0.93",
-        "homeOdds": "0.98",
-        "letgoal": "平/半",
-        "guestOdds": "0.84",
-        "oddsID_t": "81862638",
-        "upOdds_f": "1.00",
-        "totalScore_f": "4/4.5",
-        "downOdds_f": "0.80",
-        "upOdds": "0.95",
-        "totalScore": "3.5/4",
-        "downOdds": "0.85"
+        "ID": "3_2_0_1",
+        "stateInfo": "<span class=\"red\">44</span>",
+        "homeScore": 2,
+        "guestScore": 0,
+        "showScore": "2:0",
+        "oddsID_h": "81863499",
+        "homeOdds_f": "0.71",
+        "letgoal_f": "一球",
+        "guestOdds_f": "0.99",
+        "homeOdds": "0.81",
+        "letgoal": "半/一",
+        "guestOdds": "0.89",
+        "oddsID_t": "81863501",
+        "upOdds_f": "0.96",
+        "totalScore_f": "4.5",
+        "downOdds_f": "0.74",
+        "upOdds": "0.90",
+        "totalScore": "4",
+        "downOdds": "0.80"
       }
     },
-    "euro_probe": {
-      "id": "3114426",
-      "http_status": 200
-    },
-    "euro_candidates": 0,
+    "euro_probe": null,
+    "euro_candidates": 381,
     "euro_success": 0,
-    "market_results": {},
-    "detail_pages_requested": 0
+    "market_results": {
+      "3003967": {
+        "euro": {
+          "preferred_rows": 0,
+          "fallback_rows": 0,
+          "outcome": "row_missing"
+        },
+        "asian": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        },
+        "ou": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        }
+      },
+      "3013777": {
+        "euro": {
+          "preferred_rows": 0,
+          "fallback_rows": 0,
+          "outcome": "row_missing"
+        },
+        "asian": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        },
+        "ou": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        }
+      },
+      "2910992": {
+        "euro": {
+          "preferred_rows": 0,
+          "fallback_rows": 0,
+          "outcome": "row_missing"
+        },
+        "asian": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        },
+        "ou": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        }
+      },
+      "2993884": {
+        "euro": {
+          "preferred_rows": 0,
+          "fallback_rows": 0,
+          "outcome": "row_missing"
+        },
+        "asian": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        },
+        "ou": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        }
+      },
+      "3018884": {
+        "euro": {
+          "preferred_rows": 0,
+          "fallback_rows": 0,
+          "outcome": "row_missing"
+        },
+        "asian": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        },
+        "ou": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        }
+      },
+      "2995409": {
+        "euro": {
+          "preferred_rows": 0,
+          "fallback_rows": 0,
+          "outcome": "row_missing"
+        },
+        "asian": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        },
+        "ou": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        }
+      },
+      "3008363": {
+        "euro": {
+          "preferred_rows": 0,
+          "fallback_rows": 0,
+          "outcome": "row_missing"
+        },
+        "asian": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        },
+        "ou": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        }
+      },
+      "3023536": {
+        "euro": {
+          "preferred_rows": 0,
+          "fallback_rows": 0,
+          "outcome": "row_missing"
+        },
+        "asian": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        },
+        "ou": {
+          "preferred_rows": 3,
+          "fallback_rows": 0,
+          "selector": "preferred",
+          "outcome": "first_row_hidden"
+        }
+      }
+    },
+    "detail_pages_requested": 24
   },
   "aiscore_backup_state": "disabled_after_hosted_access_challenge",
-  "feed_fixture_count": 241,
-  "feed_market_count": 127,
-  "window_fixture_count": 202,
+  "feed_fixture_count": 615,
+  "feed_market_count": 128,
+  "window_fixture_count": 381,
   "complete_odds_count": 0,
   "selected_count": 0,
   "message": "Fewer than three scheduled matches have all opening/current Titan odds; AI analysis not run.",
   "quality": {
     "status": "blocked",
-    "checked_at": "2026-11-27T07:19:30+08:00",
+    "checked_at": "2026-11-27T09:14:28+08:00",
     "ai_attempts": 0,
     "repairs": 0,
     "errors": 1,
     "publish_allowed": false
   },
-  "github_run_id": "45910180933",
+  "github_run_id": "45921317728",
   "telegram": "not_configured",
-  "finished_at": "2026-11-26T23:19:30.603668+00:00"
+  "finished_at": "2026-11-27T01:14:28.789133+00:00"
 }
