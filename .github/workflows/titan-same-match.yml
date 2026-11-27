@@ -68,7 +68,8 @@ jobs:
                                  visible_tables: [...document.querySelectorAll('table')].filter(visible).length,
                                  visible_market_labels: /初盘|初盤|即时|即時|指数|指數/.test(body),
                                  visible_access_prompt: /登录|登陆|登入|註冊|注册|查看权限|查看權限|人机验证|禁止访问|just a moment/i.test(body),
-                                 visible_fixture_names: /曼彻斯特联|曼聯/.test(body) && /布伦特福德|賓福特/.test(body)
+                                 visible_fixture_names: /曼彻斯特联|曼聯/.test(body) && /布伦特福德|賓福特/.test(body),
+                                 visible_access_labels: body.split(String.fromCharCode(10)).map(x => x.trim()).filter(x => /登录|登陆|登入|註冊|注册|权限|權限|权益|權益|访客|訪客|会员|會員|验证|驗證|限制|地区|地區|不支持|不支援|not available|forbidden/i.test(x)).slice(0,8).map(x => x.slice(0,100))
                               };
                               for (const row of document.querySelectorAll('tr')) {
                                   if (!visible(row)) continue;
